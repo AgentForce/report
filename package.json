@@ -1,0 +1,53 @@
+{
+  "name": "report",
+  "version": "1.0.0",
+  "description": "Report http service using restify written in typescript",
+  "main": "app.js",
+  "scripts": {
+    "build": "tsc --watch",
+    "test": "yarn run compile && mocha dist/test/unit/**/*.spec.js",
+    "test:debug": "yarn run compile && mocha --inspect-brk dist/test/unit/**/*.spec.js",
+    "compile": "tsc",
+    "start": "yarn run compile && node dist/app/app.js",
+    "dev": "tsc --watch && nodemon dist/app/app.js"
+  },
+  "keywords": [
+    "typescript",
+    "restify"
+  ],
+  "author": "Kanetnguyen",
+  "license": "MIT",
+  "dependencies": {
+    "@types/bluebird": "^3.5.18",
+    "@types/compression": "0.0.35",
+    "@types/helmet": "0.0.37",
+    "@types/mongoose": "^4.7.25",
+    "@types/node": "^8.0.47",
+    "@types/restify": "^5.0.6",
+    "@types/restify-cors-middleware": "^1.0.1",
+    "@types/sequelize": "^4.27.18",
+    "bluebird": "^3.5.1",
+    "compression": "^1.7.1",
+    "current-week-number": "^1.0.7",
+    "helmet": "^3.9.0",
+    "mongoose": "^4.13.0",
+    "mongoose-unique-validator": "^1.0.6",
+    "pg": "^7.4.3",
+    "restify": "^6.3.1",
+    "restify-cors-middleware": "^1.0.1",
+    "sequelize": "^4.37.7"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.0.4",
+    "@types/mocha": "^2.2.44",
+    "@types/mongoose-unique-validator": "^1.0.0",
+    "@types/sinon": "^2.3.7",
+    "@types/supertest": "^2.0.3",
+    "chai": "^4.1.2",
+    "mocha": "^4.0.1",
+    "sinon": "^4.1.1",
+    "supertest": "^3.0.0",
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.1"
+  }
+}

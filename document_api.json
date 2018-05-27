@@ -1,0 +1,312 @@
+1. Top 10 đại lý hoạt động nhiều nhất của Nhóm mà User này đang quản lý 
+/api/count/tenAgency/:numweekFrom/:numweekTo
+[
+  {
+    "UserId": 206,
+    "CurrentCallSale": "20",
+    "CurrentMetting": "9",
+    "CurrentPresentation": "5",
+    "CurrentContract": "2",
+    "countLogin": 33
+    },
+      {
+    "UserId": 95,
+    "CurrentCallSale": "11",
+    "CurrentMetting": "7",
+    "CurrentPresentation": "5",
+    "CurrentContract": "2",
+    "countLogin": 31
+    },
+      {
+    "UserId": 189,
+    "CurrentCallSale": "10",
+    "CurrentMetting": "7",
+    "CurrentPresentation": "5",
+    "CurrentContract": "2",
+    "countLogin": 15
+    },
+      {
+    "UserId": 176,
+    "CurrentCallSale": "7",
+    "CurrentMetting": "5",
+    "CurrentPresentation": "3",
+    "CurrentContract": "1",
+    "countLogin": 26
+    },
+      {
+    "UserId": 194,
+    "CurrentCallSale": "6",
+    "CurrentMetting": "3",
+    "CurrentPresentation": "2",
+    "CurrentContract": "1",
+    "countLogin": 72
+    },
+      {
+    "UserId": 170,
+    "CurrentCallSale": "4",
+    "CurrentMetting": "1",
+    "CurrentPresentation": "1",
+    "CurrentContract": "2",
+    "countLogin": 8
+    },
+      {
+    "UserId": 77,
+    "CurrentCallSale": "4",
+    "CurrentMetting": "2",
+    "CurrentPresentation": "1",
+    "CurrentContract": "0",
+    "countLogin": 91
+    },
+      {
+    "UserId": 80,
+    "CurrentCallSale": "3",
+    "CurrentMetting": "1",
+    "CurrentPresentation": "0",
+    "CurrentContract": "0",
+    "countLogin": 89
+    },
+      {
+    "UserId": 51,
+    "CurrentCallSale": "1",
+    "CurrentMetting": "1",
+    "CurrentPresentation": "0",
+    "CurrentContract": "0",
+    "countLogin": 78
+    },
+      {
+    "UserId": 78,
+    "CurrentCallSale": "1",
+    "CurrentMetting": "0",
+    "CurrentPresentation": "0",
+    "CurrentContract": "0",
+    "countLogin": 93
+    }
+],
+2. Số đại lý hoạt động từng nhóm báo cáo trực tiếp Và Đại lý hoạt động 7 ngày gần nhất
+/api/count/getAgencyInWeek
+[
+  {
+    "username": "m01667041003",
+    "arr_days": [
+      {
+      "date": "2018-05-27",
+      "countLogin": 778
+      },
+      {
+      "date": "2018-05-26",
+      "countLogin": 145
+      },
+      {
+      "date": "2018-05-25",
+      "countLogin": 823
+      },
+      {
+      "date": "2018-05-24",
+      "countLogin": 609
+      },
+      {
+      "date": "2018-05-23",
+      "countLogin": 993
+      },
+      {
+    "date": "2018-05-22",
+    "countLogin": 321
+    },
+      {
+    "date": "2018-05-21",
+    "countLogin": 186
+    }
+    ],
+    },
+      {
+    "username": "m01667041002",
+    "arr_days": [
+      {
+    "date": "2018-05-27",
+    "countLogin": 743
+    },
+      {
+    "date": "2018-05-26",
+    "countLogin": 616
+    },
+      {
+    "date": "2018-05-25",
+    "countLogin": 931
+    },
+      {
+    "date": "2018-05-24",
+    "countLogin": 456
+    },
+      {
+    "date": "2018-05-23",
+    "countLogin": 722
+    },
+      {
+    "date": "2018-05-22",
+    "countLogin": 514
+    },
+      {
+    "date": "2018-05-21",
+    "countLogin": 904
+    }
+    ],
+    },
+      {
+    "username": "m01667041001",
+    "arr_days": [
+      {
+    "date": "2018-05-27",
+    "countLogin": 323
+    },
+      {
+    "date": "2018-05-26",
+    "countLogin": 136
+    },
+      {
+    "date": "2018-05-25",
+    "countLogin": 189
+    },
+      {
+    "date": "2018-05-24",
+    "countLogin": 23
+    },
+      {
+    "date": "2018-05-23",
+    "countLogin": 297
+    },
+      {
+    "date": "2018-05-22",
+    "countLogin": 875
+    },
+      {
+    "date": "2018-05-21",
+    "countLogin": 713
+    }
+    ],
+    }
+],
+3. Total user onboard của các cấp dưới trực tiếp
+/api/count/getUserOnboard
+[
+  {
+    "username": "m01667041003",
+    "fullName": "Trần Thị Kim Đính",
+    "inactive": 31,
+    "active": 24
+  },
+  {
+    "username": "m01667041002",
+    "fullName": "Phạm Chí Công",
+    "inactive": 31,
+    "active": 9
+  },
+  {
+    "username": "m01667041001",
+    "fullName": "Ngô Thị Anh",
+    "inactive": 36,
+    "active": 24
+  }
+],
+4. Thống kê đại lý hoạt động 7 ngày gần nhất
+/api/count/getAction
+{
+    "total": 157,
+    "arr_days": [
+      {
+    "date": "2018-05-27",
+    "countLogin": 88
+    },
+      {
+    "date": "2018-05-26",
+    "countLogin": 0
+    },
+      {
+    "date": "2018-05-25",
+    "countLogin": 127
+    },
+      {
+    "date": "2018-05-24",
+    "countLogin": 86
+    },
+      {
+    "date": "2018-05-23",
+    "countLogin": 44
+    },
+      {
+    "date": "2018-05-22",
+    "countLogin": 80
+    },
+      {
+    "date": "2018-05-21",
+    "countLogin": 106
+    }
+    ],
+}
+5. Thống kê các hoạt động của từng vùng
+/api/count/getActionCall/:numweekFrom/:numweekTo
+[
+  {
+    "username": "m01667041003",
+    "call": 0,
+    "activity": 0
+    },
+      {
+    "username": "m01667041002",
+    "call": 0,
+    "activity": 0
+    },
+      {
+    "username": "m01667041001",
+    "call": 6,
+    "activity": 0
+  }
+],
+6. Thống kê loại thiết bị   
+/api/count/device
+{
+  "android": 293,
+  "ios": 14
+}
+7. Hiệu suất bán hàng   
+/api/count/getSales/:numweekFrom/:numweekTo
+{
+  "currentcallsale": "6",
+  "targetcallsale": "1580",
+  "currentmetting": "2",
+  "currentpresentation": "2",
+  "currentcontract": "3"
+}
+8. Hiệu suất tuyển dụng  
+/api/count/getRecruitment/:numweekFrom/:numweekTo
+{
+  "currentsurvey": "2",
+  "targetsurvey": "122",
+  "currentcop": "1",
+  "targetcop": "46",
+  "currentmit": "0",
+  "targetmit": "31",
+  "currentagentcode": "0",
+  "targetagentcode": "16"
+}
+9. Thống kê sản phẩm
+/api/count/getProduct/:numweekFrom/:numweekTo
+[
+  {
+  "Title": "Manulife - cuộc sống tươi đẹp",
+  "ProductId": 3,
+  "numcontract": "2",
+  "revenue": "10000000"
+  },
+    {
+  "Title": "Manulife - Chắp cánh tương lai",
+  "ProductId": 2,
+  "numcontract": "1",
+  "revenue": "10000000"
+  },
+    {
+  "Title": "Món quà sức khỏe",
+  "ProductId": 4,
+  "numcontract": "2",
+  "revenue": "10000000"
+  }
+  ],

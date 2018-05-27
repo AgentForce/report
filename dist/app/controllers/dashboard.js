@@ -1,0 +1,308 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const user_activities_1 = require("../models/user_activities");
+const log_calls_1 = require("../models/log_calls");
+const User_1 = require("../pgoauth/User");
+const db_1 = require("../pgmnl/db");
+const db_2 = require("../pgoauth/db");
+const promise = require("bluebird");
+const currentWeekNumber = require('current-week-number');
+const moment = require('moment');
+class DashboardController {
+    constructor() {
+        this.countDevices = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const projection = {};
+            const options = {};
+            let arr = new Array;
+            let result = { android: 0, ios: 0 };
+            const android = yield user_activities_1.UserActivities.find({ 'clientId': 'sopandroid', 'activityType': 'login' }, projection, options, (err, logs) => {
+                if (err) {
+                    return next(err);
+                }
+                else {
+                    return logs;
+                }
+            });
+            const ios = yield user_activities_1.UserActivities.find({ 'clientId': 'sopios', 'activityType': 'login' }, projection, options, (err, logs) => {
+                if (err) {
+                    return next(err);
+                }
+                else {
+                    return logs;
+                }
+            });
+            result.android = android.length;
+            result.ios = ios.length;
+            res.send(200, result);
+        });
+        this.getTenAgency = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const projection = {};
+            const options = {};
+            let result = new Array;
+            const d = new Date();
+            const m = d.getMonth() + 1;
+            const day = d.getDay();
+            const y = d.getFullYear();
+            const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
+            const NumWeekTo = currentWeekNumber(d);
+            const idLogin = 56;
+            result = yield db_1.sequelize.query('select "UserId",sum("CurrentCallSale") as "CurrentCallSale", sum("CurrentMetting") as "CurrentMetting", sum("CurrentPresentation") as "CurrentPresentation", sum("CurrentContract") as "CurrentContract"  from manulife_campaigns where "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo + ' and "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' group by "UserId" order by "CurrentCallSale" desc limit 10', { replacements: {}, type: db_1.sequelize.QueryTypes.SELECT }).then(projects => {
+                return projects;
+            });
+            yield promise.map(result, function (item) {
+                return new Promise(function (fulfill, reject) {
+                    item.countLogin = Math.floor(Math.random() * Math.floor(99));
+                    fulfill(item);
+                });
+            }, { concurrency: 10 }).then(function (result) {
+                console.log(result);
+            }).catch(function (err) {
+                console.log(err);
+            });
+            res.send(200, result);
+        });
+        this.getSalesInWeek = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const projection = {};
+            const options = {};
+            let result = new Array;
+            const d = new Date();
+            const m = d.getMonth() + 1;
+            const day = d.getDay();
+            const y = d.getFullYear();
+            const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
+            const NumWeekTo = currentWeekNumber();
+            const idLogin = 56;
+            let count_user = yield db_1.sequelize.query('select "CurrentCallSale","SubCurrentCallSale","CurrentMetting","SubCurrentMetting","CurrentPresentation","SubCurrentPresentation","CurrentContract","SubCurrentContract" from manulife_campaigns where "UserId" = ' + idLogin + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                return projects;
+            });
+            if (count_user.length === 0) {
+                count_user = yield db_1.sequelize.query('select sum("CurrentCallSale") as CurrentCallSale, sum("TargetCallSale") as TargetCallSale, sum("CurrentMetting") as CurrentMetting, sum("CurrentPresentation") as CurrentPresentation, sum("CurrentContract") as CurrentContract  from manulife_campaigns where "ReportToList" ~ ' + "'*." + idLogin + ".*'" + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                    return projects[0];
+                });
+            }
+            else {
+                count_user = count_user[0];
+                count_user.currentcallsale = count_user.currentcallsale + count_user.subcurrentcallsale;
+                count_user.targetcallsale = count_user.targetcallsale + count_user.subtargetcallsale;
+                count_user.currentmetting = count_user.currentmetting + count_user.subcurrentmetting;
+                count_user.currentpresentation = count_user.currentpresentation + count_user.subcurrentpresentation;
+                count_user.currentcontract = count_user.currentcontract + count_user.subcurrentcontract;
+            }
+            res.send(200, count_user);
+        });
+        this.getProduct = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const projection = {};
+            const options = {};
+            let result = new Array;
+            const d = new Date();
+            const m = d.getMonth() + 1;
+            const day = d.getDay();
+            const y = d.getFullYear();
+            const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
+            const NumWeekTo = currentWeekNumber();
+            const idLogin = 56;
+            let count_user = yield db_1.sequelize.query('select  "Title",  "ProductId",sum("NumContract") as NumContract, sum("Revenue") as Revenue from manulife_contract_products, manulife_products where "ProductId" = manulife_products."Id" and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo + ' and "ReportToList" ' + "~'*." + idLogin + ".*'" + ' group by "ProductId", "Title"', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                return projects;
+            });
+            res.send(200, count_user);
+        });
+        this.getRecruitmentInWeek = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const projection = {};
+            const options = {};
+            let result = new Array;
+            const d = new Date();
+            const m = d.getMonth() + 1;
+            const day = d.getDay();
+            const y = d.getFullYear();
+            const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
+            const NumWeekTo = currentWeekNumber();
+            const idLogin = 56;
+            let count_user = yield db_1.sequelize.query('select "CurrentSurvey","SubCurrentSurvey","TargetSurvey","SubTargetSurvey","CurrentCop","SubCurrentCop", "TargetCop", "SubTargetCop", "CurrentMit", "SubCurrentMit", "TargetMit", "SubTargetMit", "CurrentAgentCode", "SubCurrentAgentCode", "TargetAgentCode", "SubTargetAgentCode" from manulife_campaigns where "UserId" = ' + idLogin + ' and  "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                return projects;
+            });
+            if (count_user.length === 0) {
+                count_user = yield db_1.sequelize.query('select sum("CurrentSurvey") as CurrentSurvey, sum("TargetSurvey") as TargetSurvey, sum("CurrentCop") as CurrentCop, sum("TargetCop") as TargetCop, sum("CurrentMit") as CurrentMit, sum("TargetMit") as TargetMit, sum("CurrentAgentCode") as CurrentAgentCode, sum("TargetAgentCode") as TargetAgentCode  from manulife_campaigns where "ReportToList" ~ ' + "'*." + idLogin + ".*'" + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                    return projects[0];
+                });
+            }
+            else {
+                count_user = count_user[0];
+                count_user.currentsurvey = count_user.currentsurvey + count_user.subcurrentsurvey;
+                count_user.targetsurvey = count_user.targetsurvey + count_user.subtargetsurvey;
+                count_user.currentcop = count_user.currentcop + count_user.subcurrentcop;
+                count_user.targetcop = count_user.targetcop + count_user.subtargetcop;
+                count_user.currentmit = count_user.currentmit + count_user.currentmit;
+                count_user.targetmit = count_user.targetmit + count_user.subtargetmit;
+                count_user.currentagentcode = count_user.currentagentcode + count_user.subcurrentagentcode;
+                count_user.targetagentcode = count_user.targetagentcode + count_user.sutargetagentcode;
+            }
+            console.log('================');
+            res.send(200, count_user);
+        });
+        this.getActionInWeek = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const projection = {};
+            const options = {};
+            let result = new Array;
+            const d = new Date();
+            const m = d.getMonth() + 1;
+            const day = d.getDay();
+            const y = d.getFullYear();
+            const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
+            const NumWeekTo = currentWeekNumber(d);
+            const idLogin = 56;
+            let count_user = yield db_2.sequelizeOauth.query('select count(*) from oauth_users where "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + '', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                return projects[0].count;
+            });
+            count_user = parseInt(count_user);
+            const arr_days = [moment().subtract(0, 'days').format('YYYY-MM-DD'), moment().subtract(1, 'days').format('YYYY-MM-DD'), moment().subtract(2, 'days').format('YYYY-MM-DD'), moment().subtract(3, 'days').format('YYYY-MM-DD'), moment().subtract(4, 'days').format('YYYY-MM-DD'),
+                moment().subtract(5, 'days').format('YYYY-MM-DD'), moment().subtract(6, 'days').format('YYYY-MM-DD')];
+            let arr = new Array;
+            const promise_map = { total: count_user, arr_days: arr };
+            yield promise.map(arr_days, function (day) {
+                return new Promise(function (fulfill, reject) {
+                    const obj_xl_date = { date: day, countLogin: Math.floor(Math.random() * Math.floor(157)) };
+                    fulfill(obj_xl_date);
+                });
+            }, { concurrency: 10 }).then(function (result) {
+                console.log(result);
+                promise_map.arr_days = result;
+            }).catch(function (err) {
+                console.log(err);
+            });
+            res.send(200, promise_map);
+        });
+        this.getActionCallInWeek = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const projection = {};
+            const options = {};
+            let result = new Array;
+            const d = new Date();
+            const m = d.getMonth() + 1;
+            const day = d.getDay();
+            const y = d.getFullYear();
+            const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
+            const NumWeekTo = currentWeekNumber(d);
+            const idLogin = 56;
+            const arr_AgentReportTo = yield User_1.User.findAll({ where: { report_to: idLogin + '' }, offset: 1, limit: 5 });
+            const date_to = moment().subtract(0, 'days').format('YYYY-MM-DD');
+            const date_from = moment().subtract(6, 'days').format('YYYY-MM-DD');
+            let promise_map;
+            yield promise.map(arr_AgentReportTo, function (obj_agent) {
+                return new Promise(function (fulfill, reject) {
+                    return __awaiter(this, void 0, void 0, function* () {
+                        let arr = new Array;
+                        let obj = { username: obj_agent.username, call: 0, activity: 0 };
+                        const call = yield log_calls_1.logCalls.find({ reportToList: { '$regex': obj_agent.id, '$options': 'i' } }, projection, options, (err, calls) => {
+                            if (err) {
+                                return next(err);
+                            }
+                            else {
+                                return calls;
+                            }
+                        });
+                        obj.call = call.length;
+                        let result;
+                        result = yield db_1.sequelize.query('select sum("SubCurrentMetting") as SubCurrentMetting, sum("CurrentMetting") as CurrentMetting from manulife_campaigns where "ReportTo" = ' + obj_agent.id + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_1.sequelize.QueryTypes.SELECT }).then(projects => {
+                            return projects;
+                        });
+                        if (parseInt(result[0].SubCurrentMetting) < 1) {
+                            result = yield db_1.sequelize.query('select sum("CurrentMetting") as CurrentMetting from manulife_campaigns where "ReportToList" ~ ' + "'*." + obj_agent.id + ".*'" + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_1.sequelize.QueryTypes.SELECT }).then(projects => {
+                                return projects;
+                            });
+                            if (parseInt(result[0].CurrentMetting) > 0)
+                                obj.activity = parseInt(result[0].CurrentMetting);
+                        }
+                        else {
+                            if (parseInt(result[0].CurrentMetting) > 0)
+                                obj.activity = parseInt(result[0].SubCurrentMetting) + parseInt(result[0].CurrentMetting);
+                        }
+                        fulfill(obj);
+                    });
+                });
+            }, { concurrency: 10 }).then(function (result) {
+                promise_map = result;
+            }).catch(function (err) {
+                console.log(err);
+            });
+            console.log(promise_map);
+            res.send(200, promise_map);
+        });
+        this.getAgencyInWeek = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const projection = {};
+            const options = {};
+            let result = new Array;
+            const d = new Date();
+            const m = d.getMonth() + 1;
+            const day = d.getDay();
+            const y = d.getFullYear();
+            const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
+            const NumWeekTo = currentWeekNumber(d);
+            const idLogin = 56;
+            const arr_AgentReportTo = yield User_1.User.findAll({ where: { report_to: idLogin + '' }, offset: 1, limit: 5 });
+            const arr_days = [moment().subtract(0, 'days').format('YYYY-MM-DD'), moment().subtract(1, 'days').format('YYYY-MM-DD'), moment().subtract(2, 'days').format('YYYY-MM-DD'), moment().subtract(3, 'days').format('YYYY-MM-DD'), moment().subtract(4, 'days').format('YYYY-MM-DD'),
+                moment().subtract(5, 'days').format('YYYY-MM-DD'), moment().subtract(6, 'days').format('YYYY-MM-DD')];
+            let promise_map;
+            yield promise.map(arr_AgentReportTo, function (obj_agent) {
+                return new Promise(function (fulfill, reject) {
+                    let arr = new Array;
+                    let obj = { username: obj_agent.username, arr_days: arr };
+                    promise.map(arr_days, function (day) {
+                        return new Promise(function (fulfill, reject) {
+                            const obj_xl_date = { date: day, countLogin: Math.floor(Math.random() * Math.floor(999)) };
+                            fulfill(obj_xl_date);
+                        });
+                    }, { concurrency: 10 }).then(function (result) {
+                        console.log(result);
+                        obj.arr_days = result;
+                    }).catch(function (err) {
+                        console.log(err);
+                    });
+                    fulfill(obj);
+                });
+            }, { concurrency: 10 }).then(function (result) {
+                promise_map = result;
+            }).catch(function (err) {
+                console.log(err);
+            });
+            console.log(promise_map);
+            res.send(200, promise_map);
+        });
+        this.getUserOnboard = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const idLogin = 56;
+            const arr_AgentReportTo = yield User_1.User.findAll({ where: { report_to: idLogin + '' }, offset: 1, limit: 5 });
+            let return_res;
+            yield promise.map(arr_AgentReportTo, function (item) {
+                return new Promise(function (fulfill, reject) {
+                    return __awaiter(this, void 0, void 0, function* () {
+                        const obj = { username: item.username, fullName: item.fullName, inactive: 0, active: 0 };
+                        let inactive;
+                        inactive = yield db_2.sequelizeOauth.query('select count(*) from oauth_users where "report_to_list"' + ' ~\'*.' + item.id + '.*\'' + ' and "status" = 0', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                            return projects[0].count;
+                        });
+                        const active = yield db_2.sequelizeOauth.query('select count(*) from oauth_users where "report_to_list"' + ' ~\'*.' + item.id + '.*\'' + ' and "status" = 1', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                            return projects[0].count;
+                        });
+                        console.log(inactive);
+                        obj.inactive = parseInt(inactive);
+                        obj.active = parseInt(active);
+                        fulfill(obj);
+                    });
+                });
+            }, { concurrency: 10 }).then(function (result) {
+                return_res = result;
+            }).catch(function (err) {
+                console.log(err);
+            });
+            res.send(200, return_res);
+        });
+    }
+}
+exports.default = DashboardController;
+//# sourceMappingURL=dashboard.js.map
