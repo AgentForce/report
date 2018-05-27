@@ -6,7 +6,7 @@ class Config {
         this.rootPath = this.path.normalize(__dirname + '/..');
         this.nodeEnv = process.env.NODE_ENV || 'development';
         this.nodeHost = process.env.NODE_HOST || '127.0.0.1';
-        this.nodePort = process.env.NODE_PORT || 3000;
+        this.nodePort = process.env.NODE_PORT || 4500;
         this.appName = process.env.APP_NAME || `manulife`;
         this.appVersion = process.env.APP_VERSION || '1.0.0';
         this.mongoConnect = process.env.MONGO_CONNECT || 'mongodb://manulife:manulife!!!@13.250.129.169:27017';
