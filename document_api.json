@@ -1,5 +1,5 @@
 1. Top 10 đại lý hoạt động nhiều nhất của Nhóm mà User này đang quản lý 
-/api/count/tenAgency/:numweekFrom/:numweekTo
+http://localhost:3000/api/count/tenAgency/17/22/2018-01-01/2018-06-06
 [
   {
     "UserId": 206,

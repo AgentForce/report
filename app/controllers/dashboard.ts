@@ -45,7 +45,10 @@ export default class DashboardController {
         res.send(200, result);
     }
 
-    public getTenAgency = async (req: Request, res: Response, next: Next) => {
+    public getTenAgency = async (req: any, res: Response, next: Next) => {
+        // console.log('====');
+        // console.log(req.token);
+        // console.log(req.token.id);
         // http://mongoosejs.com/docs/api.html#model_Model.find
         const projection = {};
         const options = { };
@@ -59,28 +62,40 @@ export default class DashboardController {
         const NumWeekFrom = currentWeekNumber( m + '/01/' + y);
         const NumWeekTo = currentWeekNumber(d);
         // Get id user to Token
-        const idLogin = 56;
-        result = await sequelize.query('select "UserId",sum("CurrentCallSale") as "CurrentCallSale", sum("CurrentMetting") as "CurrentMetting", sum("CurrentPresentation") as "CurrentPresentation", sum("CurrentContract") as "CurrentContract"  from manulife_campaigns where "NumWeek" between ' + req.params.numweekFrom  + ' and ' + req.params.numweekTo + ' and "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' group by "UserId" order by "CurrentCallSale" desc limit 10',
+        const idLogin = req.token.id;
+        result = await sequelize.query('select "UserName", "UserId",sum("CurrentCallSale") as "CurrentCallSale", sum("CurrentMetting") as "CurrentMetting", sum("CurrentPresentation") as "CurrentPresentation", sum("CurrentContract") as "CurrentContract"  from manulife_campaigns where "NumWeek" between ' + req.params.numweekFrom  + ' and ' + req.params.numweekTo + ' and "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' group by "UserId", "UserName" order by "CurrentCallSale" desc limit 10',
                 { replacements: { }, type: sequelize.QueryTypes.SELECT }
                 ).then(projects => {
                     return projects;
                 });
         await promise.map(result, function(item) {
-            return new Promise(function(fulfill, reject) {
+            return new Promise(async function(fulfill, reject) {
                 // Select DB oauth
-                item.countLogin = Math.floor(Math.random() * Math.floor(99));
-                fulfill(item);
+                // console.log(item);
+                const table = 'oauth_monitor_login'; // + (parseInt(item.UserId) % 9); report_to_list
+                let count_user = await sequelizeOauth.query('select sum("count") from ' + table + ' where "date" between ' + "'" + req.params.dateFrom + "'" + ' and ' + "'" + req.params.dateTo + "'" + ' and "report_to_list"' + ' ~\'*.' + item.UserId + '.*\'' + '',
+                { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
+                ).then(projects => {
+                    console.log(projects);
+                    if (projects[0].sum === null) projects[0].sum = 0;
+                    item.countLogin = parseInt(projects[0].sum);
+                    console.log(item);
+                    fulfill(item);
+                });
+                // const arr_AgentReportTo = User.findAll({ where: {report_to: idLogin + ''}, offset: 1, limit: 5 });
+                // item.countLogin = count_user; // Math.floor(Math.random() * Math.floor(99));
+                // fulfill(item);
             });
           }, {concurrency: 10}).then(function(result) {
-              console.log(result);
+              // console.log(result);
           }).catch(function(err) {
-              console.log(err);
+              // console.log(err);
           });
         // res.header('X-Total-Count', result.mongo.length);
         res.send(200, result);
     }
 
-    public getSalesInWeek = async (req: Request, res: Response, next: Next) => {
+    public getSalesInWeek = async (req: any, res: Response, next: Next) => {
         // http://mongoosejs.com/docs/api.html#model_Model.find
         const projection = {};
         const options = { };
@@ -94,15 +109,15 @@ export default class DashboardController {
         const NumWeekFrom = currentWeekNumber( m + '/01/' + y);
         const NumWeekTo = currentWeekNumber();
         // Get id user to Token
-        const idLogin = 56;
+        const idLogin = req.token.id;
         // Get agent report to
-        let count_user = await sequelize.query('select "CurrentCallSale","SubCurrentCallSale","CurrentMetting","SubCurrentMetting","CurrentPresentation","SubCurrentPresentation","CurrentContract","SubCurrentContract" from manulife_campaigns where "UserId" = ' + idLogin + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
+        let count_user = await sequelize.query('select "CurrentCallSale","SubCurrentCallSale","CurrentMetting","TargetMetting","SubCurrentMetting", "SubTargetMetting", "CurrentPresentation","SubCurrentPresentation", "TargetPresentation","SubTargetPresentation","CurrentContract","SubCurrentContract", "TargetContract","SubTargetContract" from manulife_campaigns where "UserId" = ' + idLogin + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
         ).then(projects => {
             return projects;
         });
         if (count_user.length === 0 ) {
-            count_user = await sequelize.query('select sum("CurrentCallSale") as CurrentCallSale, sum("TargetCallSale") as TargetCallSale, sum("CurrentMetting") as CurrentMetting, sum("CurrentPresentation") as CurrentPresentation, sum("CurrentContract") as CurrentContract  from manulife_campaigns where "ReportToList" ~ ' + "'*." + idLogin + ".*'" + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
+            count_user = await sequelize.query('select sum("CurrentCallSale") as CurrentCallSale, sum("TargetCallSale") as TargetCallSale, sum("CurrentMetting") as CurrentMetting, sum("TargetMetting") as TargetMetting, sum("CurrentPresentation") as CurrentPresentation, sum("TargetPresentation") as TargetPresentation, sum("CurrentContract") as CurrentContract, sum("TargetContractSale") as TargetContract  from manulife_campaigns where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
             { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
             ).then(projects => {
                 return projects[0];
@@ -112,13 +127,18 @@ export default class DashboardController {
             count_user.currentcallsale = count_user.currentcallsale + count_user.subcurrentcallsale;
             count_user.targetcallsale = count_user.targetcallsale + count_user.subtargetcallsale;
             count_user.currentmetting = count_user.currentmetting + count_user.subcurrentmetting;
+            count_user.targetmetting = count_user.targetmetting + count_user.subtargetmetting;
             count_user.currentpresentation = count_user.currentpresentation + count_user.subcurrentpresentation;
+            count_user.targetpresentation = count_user.targetpresentation + count_user.subtargetpresentation;
+
             count_user.currentcontract = count_user.currentcontract + count_user.subcurrentcontract;
+            count_user.targetcontract = count_user.targetcontract + count_user.subtargetcontract;
+
         }
         res.send(200, count_user);
     }
 
-    public getProduct = async (req: Request, res: Response, next: Next) => {
+    public getProduct = async (req: any, res: Response, next: Next) => {
         // http://mongoosejs.com/docs/api.html#model_Model.find
         const projection = {};
         const options = { };
@@ -132,9 +152,9 @@ export default class DashboardController {
         const NumWeekFrom = currentWeekNumber( m + '/01/' + y);
         const NumWeekTo = currentWeekNumber();
         // Get id user to Token
-        const idLogin = 56;
+        const idLogin = req.token.id;
         // Get agent report to
-        let count_user = await sequelize.query('select  "Title",  "ProductId",sum("NumContract") as NumContract, sum("Revenue") as Revenue from manulife_contract_products, manulife_products where "ProductId" = manulife_products."Id" and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo + ' and "ReportToList" ' + "~'*." + idLogin + ".*'" + ' group by "ProductId", "Title"',
+        let count_user = await sequelize.query('select  "Title",  "ProductId",sum("NumContract") as NumContract, sum("Revenue") as Revenue from manulife_contract_products, manulife_products where "ProductId" = manulife_products."Id" and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo + ' and "ReportToList" ' + '~\'*.' + idLogin + '.*\'' + ' group by "ProductId", "Title"',
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
         ).then(projects => {
             return projects;
@@ -142,7 +162,7 @@ export default class DashboardController {
         res.send(200, count_user);
     }
 
-    public getRecruitmentInWeek = async (req: Request, res: Response, next: Next) => {
+    public getRecruitmentInWeek = async (req: any, res: Response, next: Next) => {
         // http://mongoosejs.com/docs/api.html#model_Model.find
         const projection = {};
         const options = { };
@@ -156,7 +176,7 @@ export default class DashboardController {
         const NumWeekFrom = currentWeekNumber( m + '/01/' + y);
         const NumWeekTo = currentWeekNumber();
         // Get id user to Token
-        const idLogin = 56;
+        const idLogin = req.token.id;
         // Get agent report to
         let count_user = await sequelize.query('select "CurrentSurvey","SubCurrentSurvey","TargetSurvey","SubTargetSurvey","CurrentCop","SubCurrentCop", "TargetCop", "SubTargetCop", "CurrentMit", "SubCurrentMit", "TargetMit", "SubTargetMit", "CurrentAgentCode", "SubCurrentAgentCode", "TargetAgentCode", "SubTargetAgentCode" from manulife_campaigns where "UserId" = ' + idLogin + ' and  "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
@@ -164,7 +184,7 @@ export default class DashboardController {
             return projects;
         });
         if (count_user.length === 0 ) {
-            count_user = await sequelize.query('select sum("CurrentSurvey") as CurrentSurvey, sum("TargetSurvey") as TargetSurvey, sum("CurrentCop") as CurrentCop, sum("TargetCop") as TargetCop, sum("CurrentMit") as CurrentMit, sum("TargetMit") as TargetMit, sum("CurrentAgentCode") as CurrentAgentCode, sum("TargetAgentCode") as TargetAgentCode  from manulife_campaigns where "ReportToList" ~ ' + "'*." + idLogin + ".*'" + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
+            count_user = await sequelize.query('select sum("CurrentSurvey") as CurrentSurvey, sum("TargetSurvey") as TargetSurvey, sum("CurrentCop") as CurrentCop, sum("TargetCop") as TargetCop, sum("CurrentMit") as CurrentMit, sum("TargetMit") as TargetMit, sum("CurrentAgentCode") as CurrentAgentCode, sum("TargetAgentCode") as TargetAgentCode  from manulife_campaigns where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
             { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
             ).then(projects => {
                 return projects[0];
@@ -185,7 +205,7 @@ export default class DashboardController {
         res.send(200, count_user);
     }
 
-    public getActionInWeek = async (req: Request, res: Response, next: Next) => {
+    public getActionInWeek = async (req: any, res: Response, next: Next) => {
         // http://mongoosejs.com/docs/api.html#model_Model.find
         const projection = {};
         const options = { };
@@ -199,7 +219,7 @@ export default class DashboardController {
         const NumWeekFrom = currentWeekNumber( m + '/01/' + y);
         const NumWeekTo = currentWeekNumber(d);
         // Get id user to Token
-        const idLogin = 56;
+        const idLogin = req.token.id;
         // Get agent report to
         let count_user = await sequelizeOauth.query('select count(*) from oauth_users where "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + '',
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
@@ -213,13 +233,21 @@ export default class DashboardController {
         let arr = new Array;
         const promise_map = {total : count_user, arr_days: arr};
         await promise.map(arr_days, function(day) {
-            return new Promise(function(fulfill, reject) {
+            return new Promise(async function(fulfill, reject) {
                 // Xử lý lại số liệu
-                const obj_xl_date = {date: day, countLogin : Math.floor(Math.random() * Math.floor(157)) };
-                fulfill(obj_xl_date);
+                const dayf = moment(day).subtract(1, 'days').format('YYYY-MM-DD');
+                const table = 'oauth_monitor_login'; // + (parseInt(item.UserId) % 9); report_to_list
+                let count_user = await sequelizeOauth.query('select count(*) from ' + table + ' where "date" between ' + "'" + dayf + "'" + ' and ' + "'" + day + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + '',
+                { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
+                ).then(projects => {
+                    // console.log(projects);
+                    if (projects[0].count === null) projects[0].count = 0;
+                    const obj_xl_date = {date: day, countLogin : parseInt(projects[0].count) };
+                    fulfill(obj_xl_date);
+                });
             });
         }, {concurrency: 10}).then(function(result) {
-            console.log(result);
+            // console.log(result);
             promise_map.arr_days = result;
         }).catch(function(err) {
             console.log(err);
@@ -229,7 +257,7 @@ export default class DashboardController {
         res.send(200, promise_map);
     }
 
-    public getActionCallInWeek = async (req: Request, res: Response, next: Next) => {
+    public getActionCallInWeek = async (req: any, res: Response, next: Next) => {
         // http://mongoosejs.com/docs/api.html#model_Model.find
         const projection = {};
         const options = { };
@@ -243,7 +271,7 @@ export default class DashboardController {
         const NumWeekFrom = currentWeekNumber( m + '/01/' + y);
         const NumWeekTo = currentWeekNumber(d);
         // Get id user to Token
-        const idLogin = 56;
+        const idLogin = req.token.id;
         // Get agent report to
         const arr_AgentReportTo = await User.findAll({ where: {report_to: idLogin + ''}, offset: 1, limit: 5 });
         // Arr 7 day
@@ -273,7 +301,7 @@ export default class DashboardController {
                 });
                 // result[0].CurrentMetting = parseInt(result[0].SubCurrentMetting) + parseInt(result[0].CurrentMetting);
                 if (parseInt(result[0].SubCurrentMetting) < 1) {
-                    result = await sequelize.query('select sum("CurrentMetting") as CurrentMetting from manulife_campaigns where "ReportToList" ~ ' + "'*." + obj_agent.id + ".*'" + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
+                    result = await sequelize.query('select sum("CurrentMetting") as CurrentMetting from manulife_campaigns where "ReportToList" ~ ' + '\'*.' + obj_agent.id + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
                     { replacements: { }, type: sequelize.QueryTypes.SELECT }
                     ).then(projects => {
                         return projects;
@@ -297,7 +325,7 @@ export default class DashboardController {
         res.send(200, promise_map);
     }
 
-    public getAgencyInWeek = async (req: Request, res: Response, next: Next) => {
+    public getAgencyInWeek = async (req: any, res: Response, next: Next) => {
         // http://mongoosejs.com/docs/api.html#model_Model.find
         const projection = {};
         const options = { };
@@ -311,7 +339,7 @@ export default class DashboardController {
         const NumWeekFrom = currentWeekNumber( m + '/01/' + y);
         const NumWeekTo = currentWeekNumber(d);
         // Get id user to Token
-        const idLogin = 56;
+        const idLogin = req.token.id;
         // Get agent report to
         const arr_AgentReportTo = await User.findAll({ where: {report_to: idLogin + ''}, offset: 1, limit: 5 });
         // Arr 7 day
@@ -319,15 +347,23 @@ export default class DashboardController {
                             , moment().subtract(5, 'days').format('YYYY-MM-DD'), moment().subtract(6, 'days').format('YYYY-MM-DD')];
         let promise_map: any;
         await promise.map(arr_AgentReportTo, function(obj_agent: any) {
-            return new Promise(function(fulfill, reject) {
+            return new Promise(async function(fulfill, reject) {
                 let arr = new Array;
-                let obj = {username : obj_agent.username, arr_days: arr};
+                let obj = {username : obj_agent.username, id : obj_agent.id, arr_days: arr};
                 // obj.username = 'obj_agent.username';
-                promise.map(arr_days, function(day) {
-                    return new Promise(function(fulfill, reject) {
+                await promise.map(arr_days, function(day) {
+                    return new Promise(async function(fulfill, reject) {
                         // Xử lý lại số liệu
-                        const obj_xl_date = {date: day, countLogin : Math.floor(Math.random() * Math.floor(999)) };
-                        fulfill(obj_xl_date);
+                        const dayf = moment(day).subtract(1, 'days').format('YYYY-MM-DD');
+                        const table = 'oauth_monitor_login'; // + (parseInt(item.UserId) % 9); report_to_list
+                        let count_user = await sequelizeOauth.query('select sum("count") from ' + table + ' where "date" between ' + "'" + dayf + "'" + ' and ' + "'" + day + "'" + ' and "report_to_list"' + ' ~\'*.' + obj_agent.id + '.*\'' + '',
+                        { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
+                        ).then(projects => {
+                            console.log(projects);
+                            if (projects[0].sum === null) projects[0].sum = 0;
+                            const obj_xl_date = {date: day, countLogin : parseInt(projects[0].sum) };
+                            fulfill(obj_xl_date);
+                        });
                     });
                 }, {concurrency: 10}).then(function(result) {
                     console.log(result);
@@ -343,15 +379,15 @@ export default class DashboardController {
           }).catch(function(err) {
               console.log(err);
           });
-        console.log(promise_map);
+        // console.log(promise_map);
         // res.header('X-Total-Count', result.mongo.length);
         res.send(200, promise_map);
     }
 
-    public getUserOnboard = async (req: Request, res: Response, next: Next) => {
+    public getUserOnboard = async (req: any, res: Response, next: Next) => {
         // http://mongoosejs.com/docs/api.html#model_Model.find
         // Get id user to Token
-        const idLogin = 56;
+        const idLogin = req.token.id;
         // Get agent report to
         const arr_AgentReportTo = await User.findAll({ where: {report_to: idLogin + ''}, offset: 1, limit: 5 });
         let return_res: any;
@@ -371,7 +407,7 @@ export default class DashboardController {
                     // console.log(projects);
                     return projects[0].count;
                 });
-                console.log(inactive);
+                // console.log(inactive);
                 obj.inactive = parseInt(inactive);
                 obj.active = parseInt(active);
                 fulfill(obj);

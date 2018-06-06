@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const corsMiddleware = require("restify-cors-middleware");
 const config_1 = require("./config/config");
 const logger_1 = require("./services/logger");
+const bearerToken = require('express-bearer-token');
 const config = new config_1.default();
 const envSettings = config.envSettings;
 exports.server = restify.createServer({
@@ -14,9 +15,10 @@ exports.server = restify.createServer({
     version: envSettings.app.version
 });
 const cors = corsMiddleware({
-    preflightMaxAge: 5,
+    preflightMaxAge: 50,
     origins: ['*'],
-    allowHeaders: ['API-Token'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowHeaders: ['*'],
     exposeHeaders: ['API-Token-Expiry']
 });
 exports.server.pre(cors.preflight);
@@ -27,6 +29,7 @@ exports.server.use(restify.plugins.acceptParser(exports.server.acceptable));
 exports.server.use(restify.plugins.queryParser({ mapParams: true }));
 exports.server.use(restify.plugins.fullResponse());
 exports.server.use(restify.plugins.authorizationParser());
+exports.server.use(bearerToken());
 exports.server.listen(envSettings.app.port, envSettings.app.host, () => {
     logger_1.logger.info(`INFO: Node app ${envSettings.app.name} is running at ${exports.server.url}`);
     const options = { useMongoClient: true, promiseLibrary: bluebird };

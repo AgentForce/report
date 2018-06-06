@@ -6,6 +6,7 @@ import corsMiddleware = require('restify-cors-middleware');
 
 import configuration from './config/config';
 import { logger } from './services/logger';
+const bearerToken = require('express-bearer-token');
 
 // import { sequelize } from './pgoauth/db';
 
@@ -18,12 +19,12 @@ export let server = restify.createServer({
 });
 
 const cors = corsMiddleware({
-    preflightMaxAge: 5, // optional
+    preflightMaxAge: 50, // optional
     origins: ['*'], // change before releasing
-    allowHeaders: ['API-Token'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowHeaders: ['*'],
     exposeHeaders: ['API-Token-Expiry']
 });
-
 server.pre(cors.preflight);
 server.use(cors.actual);
 server.pre(restify.pre.sanitizePath());
@@ -32,6 +33,7 @@ server.use(restify.plugins.acceptParser(server.acceptable));
 server.use(restify.plugins.queryParser({ mapParams: true }));
 server.use(restify.plugins.fullResponse());
 server.use(restify.plugins.authorizationParser());
+server.use(bearerToken());
 
 server.listen(envSettings.app.port, envSettings.app.host, () => {
     logger.info(`INFO: Node app ${envSettings.app.name} is running at ${server.url}`);

@@ -53,19 +53,26 @@ class DashboardController {
             const y = d.getFullYear();
             const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
             const NumWeekTo = currentWeekNumber(d);
-            const idLogin = 56;
-            result = yield db_1.sequelize.query('select "UserId",sum("CurrentCallSale") as "CurrentCallSale", sum("CurrentMetting") as "CurrentMetting", sum("CurrentPresentation") as "CurrentPresentation", sum("CurrentContract") as "CurrentContract"  from manulife_campaigns where "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo + ' and "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' group by "UserId" order by "CurrentCallSale" desc limit 10', { replacements: {}, type: db_1.sequelize.QueryTypes.SELECT }).then(projects => {
+            const idLogin = req.token.id;
+            result = yield db_1.sequelize.query('select "UserName", "UserId",sum("CurrentCallSale") as "CurrentCallSale", sum("CurrentMetting") as "CurrentMetting", sum("CurrentPresentation") as "CurrentPresentation", sum("CurrentContract") as "CurrentContract"  from manulife_campaigns where "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo + ' and "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' group by "UserId", "UserName" order by "CurrentCallSale" desc limit 10', { replacements: {}, type: db_1.sequelize.QueryTypes.SELECT }).then(projects => {
                 return projects;
             });
             yield promise.map(result, function (item) {
                 return new Promise(function (fulfill, reject) {
-                    item.countLogin = Math.floor(Math.random() * Math.floor(99));
-                    fulfill(item);
+                    return __awaiter(this, void 0, void 0, function* () {
+                        const table = 'oauth_monitor_login';
+                        let count_user = yield db_2.sequelizeOauth.query('select sum("count") from ' + table + ' where "date" between ' + "'" + req.params.dateFrom + "'" + ' and ' + "'" + req.params.dateTo + "'" + ' and "report_to_list"' + ' ~\'*.' + item.UserId + '.*\'' + '', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                            console.log(projects);
+                            if (projects[0].sum === null)
+                                projects[0].sum = 0;
+                            item.countLogin = parseInt(projects[0].sum);
+                            console.log(item);
+                            fulfill(item);
+                        });
+                    });
                 });
             }, { concurrency: 10 }).then(function (result) {
-                console.log(result);
             }).catch(function (err) {
-                console.log(err);
             });
             res.send(200, result);
         });
@@ -79,12 +86,12 @@ class DashboardController {
             const y = d.getFullYear();
             const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
             const NumWeekTo = currentWeekNumber();
-            const idLogin = 56;
-            let count_user = yield db_1.sequelize.query('select "CurrentCallSale","SubCurrentCallSale","CurrentMetting","SubCurrentMetting","CurrentPresentation","SubCurrentPresentation","CurrentContract","SubCurrentContract" from manulife_campaigns where "UserId" = ' + idLogin + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+            const idLogin = req.token.id;
+            let count_user = yield db_1.sequelize.query('select "CurrentCallSale","SubCurrentCallSale","CurrentMetting","TargetMetting","SubCurrentMetting", "SubTargetMetting", "CurrentPresentation","SubCurrentPresentation", "TargetPresentation","SubTargetPresentation","CurrentContract","SubCurrentContract", "TargetContract","SubTargetContract" from manulife_campaigns where "UserId" = ' + idLogin + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                 return projects;
             });
             if (count_user.length === 0) {
-                count_user = yield db_1.sequelize.query('select sum("CurrentCallSale") as CurrentCallSale, sum("TargetCallSale") as TargetCallSale, sum("CurrentMetting") as CurrentMetting, sum("CurrentPresentation") as CurrentPresentation, sum("CurrentContract") as CurrentContract  from manulife_campaigns where "ReportToList" ~ ' + "'*." + idLogin + ".*'" + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                count_user = yield db_1.sequelize.query('select sum("CurrentCallSale") as CurrentCallSale, sum("TargetCallSale") as TargetCallSale, sum("CurrentMetting") as CurrentMetting, sum("TargetMetting") as TargetMetting, sum("CurrentPresentation") as CurrentPresentation, sum("TargetPresentation") as TargetPresentation, sum("CurrentContract") as CurrentContract, sum("TargetContractSale") as TargetContract  from manulife_campaigns where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                     return projects[0];
                 });
             }
@@ -93,8 +100,11 @@ class DashboardController {
                 count_user.currentcallsale = count_user.currentcallsale + count_user.subcurrentcallsale;
                 count_user.targetcallsale = count_user.targetcallsale + count_user.subtargetcallsale;
                 count_user.currentmetting = count_user.currentmetting + count_user.subcurrentmetting;
+                count_user.targetmetting = count_user.targetmetting + count_user.subtargetmetting;
                 count_user.currentpresentation = count_user.currentpresentation + count_user.subcurrentpresentation;
+                count_user.targetpresentation = count_user.targetpresentation + count_user.subtargetpresentation;
                 count_user.currentcontract = count_user.currentcontract + count_user.subcurrentcontract;
+                count_user.targetcontract = count_user.targetcontract + count_user.subtargetcontract;
             }
             res.send(200, count_user);
         });
@@ -108,8 +118,8 @@ class DashboardController {
             const y = d.getFullYear();
             const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
             const NumWeekTo = currentWeekNumber();
-            const idLogin = 56;
-            let count_user = yield db_1.sequelize.query('select  "Title",  "ProductId",sum("NumContract") as NumContract, sum("Revenue") as Revenue from manulife_contract_products, manulife_products where "ProductId" = manulife_products."Id" and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo + ' and "ReportToList" ' + "~'*." + idLogin + ".*'" + ' group by "ProductId", "Title"', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+            const idLogin = req.token.id;
+            let count_user = yield db_1.sequelize.query('select  "Title",  "ProductId",sum("NumContract") as NumContract, sum("Revenue") as Revenue from manulife_contract_products, manulife_products where "ProductId" = manulife_products."Id" and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo + ' and "ReportToList" ' + '~\'*.' + idLogin + '.*\'' + ' group by "ProductId", "Title"', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                 return projects;
             });
             res.send(200, count_user);
@@ -124,12 +134,12 @@ class DashboardController {
             const y = d.getFullYear();
             const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
             const NumWeekTo = currentWeekNumber();
-            const idLogin = 56;
+            const idLogin = req.token.id;
             let count_user = yield db_1.sequelize.query('select "CurrentSurvey","SubCurrentSurvey","TargetSurvey","SubTargetSurvey","CurrentCop","SubCurrentCop", "TargetCop", "SubTargetCop", "CurrentMit", "SubCurrentMit", "TargetMit", "SubTargetMit", "CurrentAgentCode", "SubCurrentAgentCode", "TargetAgentCode", "SubTargetAgentCode" from manulife_campaigns where "UserId" = ' + idLogin + ' and  "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                 return projects;
             });
             if (count_user.length === 0) {
-                count_user = yield db_1.sequelize.query('select sum("CurrentSurvey") as CurrentSurvey, sum("TargetSurvey") as TargetSurvey, sum("CurrentCop") as CurrentCop, sum("TargetCop") as TargetCop, sum("CurrentMit") as CurrentMit, sum("TargetMit") as TargetMit, sum("CurrentAgentCode") as CurrentAgentCode, sum("TargetAgentCode") as TargetAgentCode  from manulife_campaigns where "ReportToList" ~ ' + "'*." + idLogin + ".*'" + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                count_user = yield db_1.sequelize.query('select sum("CurrentSurvey") as CurrentSurvey, sum("TargetSurvey") as TargetSurvey, sum("CurrentCop") as CurrentCop, sum("TargetCop") as TargetCop, sum("CurrentMit") as CurrentMit, sum("TargetMit") as TargetMit, sum("CurrentAgentCode") as CurrentAgentCode, sum("TargetAgentCode") as TargetAgentCode  from manulife_campaigns where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                     return projects[0];
                 });
             }
@@ -157,7 +167,7 @@ class DashboardController {
             const y = d.getFullYear();
             const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
             const NumWeekTo = currentWeekNumber(d);
-            const idLogin = 56;
+            const idLogin = req.token.id;
             let count_user = yield db_2.sequelizeOauth.query('select count(*) from oauth_users where "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + '', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                 return projects[0].count;
             });
@@ -168,11 +178,18 @@ class DashboardController {
             const promise_map = { total: count_user, arr_days: arr };
             yield promise.map(arr_days, function (day) {
                 return new Promise(function (fulfill, reject) {
-                    const obj_xl_date = { date: day, countLogin: Math.floor(Math.random() * Math.floor(157)) };
-                    fulfill(obj_xl_date);
+                    return __awaiter(this, void 0, void 0, function* () {
+                        const dayf = moment(day).subtract(1, 'days').format('YYYY-MM-DD');
+                        const table = 'oauth_monitor_login';
+                        let count_user = yield db_2.sequelizeOauth.query('select count(*) from ' + table + ' where "date" between ' + "'" + dayf + "'" + ' and ' + "'" + day + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + '', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                            if (projects[0].count === null)
+                                projects[0].count = 0;
+                            const obj_xl_date = { date: day, countLogin: parseInt(projects[0].count) };
+                            fulfill(obj_xl_date);
+                        });
+                    });
                 });
             }, { concurrency: 10 }).then(function (result) {
-                console.log(result);
                 promise_map.arr_days = result;
             }).catch(function (err) {
                 console.log(err);
@@ -189,7 +206,7 @@ class DashboardController {
             const y = d.getFullYear();
             const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
             const NumWeekTo = currentWeekNumber(d);
-            const idLogin = 56;
+            const idLogin = req.token.id;
             const arr_AgentReportTo = yield User_1.User.findAll({ where: { report_to: idLogin + '' }, offset: 1, limit: 5 });
             const date_to = moment().subtract(0, 'days').format('YYYY-MM-DD');
             const date_from = moment().subtract(6, 'days').format('YYYY-MM-DD');
@@ -213,7 +230,7 @@ class DashboardController {
                             return projects;
                         });
                         if (parseInt(result[0].SubCurrentMetting) < 1) {
-                            result = yield db_1.sequelize.query('select sum("CurrentMetting") as CurrentMetting from manulife_campaigns where "ReportToList" ~ ' + "'*." + obj_agent.id + ".*'" + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_1.sequelize.QueryTypes.SELECT }).then(projects => {
+                            result = yield db_1.sequelize.query('select sum("CurrentMetting") as CurrentMetting from manulife_campaigns where "ReportToList" ~ ' + '\'*.' + obj_agent.id + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_1.sequelize.QueryTypes.SELECT }).then(projects => {
                                 return projects;
                             });
                             if (parseInt(result[0].CurrentMetting) > 0)
@@ -244,38 +261,48 @@ class DashboardController {
             const y = d.getFullYear();
             const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
             const NumWeekTo = currentWeekNumber(d);
-            const idLogin = 56;
+            const idLogin = req.token.id;
             const arr_AgentReportTo = yield User_1.User.findAll({ where: { report_to: idLogin + '' }, offset: 1, limit: 5 });
             const arr_days = [moment().subtract(0, 'days').format('YYYY-MM-DD'), moment().subtract(1, 'days').format('YYYY-MM-DD'), moment().subtract(2, 'days').format('YYYY-MM-DD'), moment().subtract(3, 'days').format('YYYY-MM-DD'), moment().subtract(4, 'days').format('YYYY-MM-DD'),
                 moment().subtract(5, 'days').format('YYYY-MM-DD'), moment().subtract(6, 'days').format('YYYY-MM-DD')];
             let promise_map;
             yield promise.map(arr_AgentReportTo, function (obj_agent) {
                 return new Promise(function (fulfill, reject) {
-                    let arr = new Array;
-                    let obj = { username: obj_agent.username, arr_days: arr };
-                    promise.map(arr_days, function (day) {
-                        return new Promise(function (fulfill, reject) {
-                            const obj_xl_date = { date: day, countLogin: Math.floor(Math.random() * Math.floor(999)) };
-                            fulfill(obj_xl_date);
+                    return __awaiter(this, void 0, void 0, function* () {
+                        let arr = new Array;
+                        let obj = { username: obj_agent.username, id: obj_agent.id, arr_days: arr };
+                        yield promise.map(arr_days, function (day) {
+                            return new Promise(function (fulfill, reject) {
+                                return __awaiter(this, void 0, void 0, function* () {
+                                    const dayf = moment(day).subtract(1, 'days').format('YYYY-MM-DD');
+                                    const table = 'oauth_monitor_login';
+                                    let count_user = yield db_2.sequelizeOauth.query('select sum("count") from ' + table + ' where "date" between ' + "'" + dayf + "'" + ' and ' + "'" + day + "'" + ' and "report_to_list"' + ' ~\'*.' + obj_agent.id + '.*\'' + '', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                                        console.log(projects);
+                                        if (projects[0].sum === null)
+                                            projects[0].sum = 0;
+                                        const obj_xl_date = { date: day, countLogin: parseInt(projects[0].sum) };
+                                        fulfill(obj_xl_date);
+                                    });
+                                });
+                            });
+                        }, { concurrency: 10 }).then(function (result) {
+                            console.log(result);
+                            obj.arr_days = result;
+                        }).catch(function (err) {
+                            console.log(err);
                         });
-                    }, { concurrency: 10 }).then(function (result) {
-                        console.log(result);
-                        obj.arr_days = result;
-                    }).catch(function (err) {
-                        console.log(err);
+                        fulfill(obj);
                     });
-                    fulfill(obj);
                 });
             }, { concurrency: 10 }).then(function (result) {
                 promise_map = result;
             }).catch(function (err) {
                 console.log(err);
             });
-            console.log(promise_map);
             res.send(200, promise_map);
         });
         this.getUserOnboard = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-            const idLogin = 56;
+            const idLogin = req.token.id;
             const arr_AgentReportTo = yield User_1.User.findAll({ where: { report_to: idLogin + '' }, offset: 1, limit: 5 });
             let return_res;
             yield promise.map(arr_AgentReportTo, function (item) {
@@ -289,7 +316,6 @@ class DashboardController {
                         const active = yield db_2.sequelizeOauth.query('select count(*) from oauth_users where "report_to_list"' + ' ~\'*.' + item.id + '.*\'' + ' and "status" = 1', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                             return projects[0].count;
                         });
-                        console.log(inactive);
                         obj.inactive = parseInt(inactive);
                         obj.active = parseInt(active);
                         fulfill(obj);
