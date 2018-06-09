@@ -5,7 +5,7 @@ export default class Config {
 
     private nodeEnv = process.env.NODE_ENV || 'development';
     private nodeHost = process.env.NODE_HOST || '127.0.0.1';
-    private nodePort = process.env.NODE_PORT || 3000;
+    private nodePort = process.env.NODE_PORT || 4500;
 
     private appName = process.env.APP_NAME || `manulife`;
     private appVersion = process.env.APP_VERSION || '1.0.0';
