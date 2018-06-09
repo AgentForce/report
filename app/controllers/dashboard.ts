@@ -111,7 +111,7 @@ export default class DashboardController {
         // Get id user to Token
         const idLogin = req.token.id;
         // Get agent report to
-        let count_user = await sequelize.query('select "CurrentCallSale","SubCurrentCallSale","CurrentMetting","TargetMetting","SubCurrentMetting", "SubTargetMetting", "CurrentPresentation","SubCurrentPresentation", "TargetPresentation","SubTargetPresentation","CurrentContract","SubCurrentContract", "TargetContract","SubTargetContract" from manulife_campaigns where "UserId" = ' + idLogin + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
+        let count_user = await sequelize.query('select "CurrentCallSale","SubCurrentCallSale","CurrentMetting","TargetMetting","SubCurrentMetting", "SubTargetMetting", "CurrentPresentation","SubCurrentPresentation", "TargetPresentation","SubTargetPresentation","CurrentContract","SubCurrentContract", "TargetContractSale" as targetcontract,"SubTargetContractSale" as subtargetcontract from manulife_campaigns where "UserId" = ' + idLogin + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
         ).then(projects => {
             return projects;
@@ -135,6 +135,11 @@ export default class DashboardController {
             count_user.targetcontract = count_user.targetcontract + count_user.subtargetcontract;
 
         }
+        count_user.msdc = await sequelize.query('select  count(*) from manulife_leads where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
+        { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
+        ).then(projects => {
+            return projects[0].count;
+        });
         res.send(200, count_user);
     }
 
@@ -201,7 +206,11 @@ export default class DashboardController {
             count_user.targetagentcode = count_user.targetagentcode + count_user.sutargetagentcode;
 
         }
-        console.log('================');
+        count_user.countContract = await sequelize.query('select  count(*) from manulife_contracts where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
+        { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
+        ).then(projects => {
+            return projects[0].count;
+        });
         res.send(200, count_user);
     }
 

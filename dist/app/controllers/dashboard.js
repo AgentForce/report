@@ -87,7 +87,7 @@ class DashboardController {
             const NumWeekFrom = currentWeekNumber(m + '/01/' + y);
             const NumWeekTo = currentWeekNumber();
             const idLogin = req.token.id;
-            let count_user = yield db_1.sequelize.query('select "CurrentCallSale","SubCurrentCallSale","CurrentMetting","TargetMetting","SubCurrentMetting", "SubTargetMetting", "CurrentPresentation","SubCurrentPresentation", "TargetPresentation","SubTargetPresentation","CurrentContract","SubCurrentContract", "TargetContract","SubTargetContract" from manulife_campaigns where "UserId" = ' + idLogin + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+            let count_user = yield db_1.sequelize.query('select "CurrentCallSale","SubCurrentCallSale","CurrentMetting","TargetMetting","SubCurrentMetting", "SubTargetMetting", "CurrentPresentation","SubCurrentPresentation", "TargetPresentation","SubTargetPresentation","CurrentContract","SubCurrentContract", "TargetContractSale" as targetcontract,"SubTargetContractSale" as subtargetcontract from manulife_campaigns where "UserId" = ' + idLogin + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                 return projects;
             });
             if (count_user.length === 0) {
@@ -106,6 +106,9 @@ class DashboardController {
                 count_user.currentcontract = count_user.currentcontract + count_user.subcurrentcontract;
                 count_user.targetcontract = count_user.targetcontract + count_user.subtargetcontract;
             }
+            count_user.msdc = yield db_1.sequelize.query('select  count(*) from manulife_leads where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                return projects[0].count;
+            });
             res.send(200, count_user);
         });
         this.getProduct = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
@@ -154,7 +157,9 @@ class DashboardController {
                 count_user.currentagentcode = count_user.currentagentcode + count_user.subcurrentagentcode;
                 count_user.targetagentcode = count_user.targetagentcode + count_user.sutargetagentcode;
             }
-            console.log('================');
+            count_user.countContract = yield db_1.sequelize.query('select  count(*) from manulife_contracts where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                return projects[0].count;
+            });
             res.send(200, count_user);
         });
         this.getActionInWeek = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
