@@ -4,7 +4,7 @@ export default class Config {
     private rootPath = this.path.normalize(__dirname + '/..');
 
     private nodeEnv = process.env.NODE_ENV || 'development';
-    private nodeHost = process.env.NODE_HOST || '127.0.0.1';
+    private nodeHost = process.env.NODE_HOST || '';
     private nodePort = process.env.NODE_PORT || 4500;
 
     private appName = process.env.APP_NAME || `manulife`;
