@@ -5,8 +5,6 @@ export class TokenValidator {
 
     public checkToken = async (req: any, res: Response, next: Next) => {
         // http://mongoosejs.com/docs/api.html#model_Model.find
-        console.log('======');
-        console.log(req.token);
         // next();
         if (req.token !== undefined) {
             const client = new Client();

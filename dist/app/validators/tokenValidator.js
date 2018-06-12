@@ -12,11 +12,9 @@ const Client = require('node-rest-client').Client;
 class TokenValidator {
     constructor() {
         this.checkToken = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-            console.log('======');
-            console.log(req.token);
             if (req.token !== undefined) {
                 const client = new Client();
-                let datapost = { name_api: 'post_users/login' };
+                let datapost = { name_api: 'post_releads' };
                 const args = {
                     headers: {
                         'Authorization': 'Bearer ' + req.token,
