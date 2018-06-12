@@ -12,7 +12,7 @@ export class TokenValidator {
             const client = new Client();
             // Data test
             // request and response additional configuration
-            let datapost = {name_api: 'post_users/login'};
+            let datapost = {name_api: 'post_releads'};
             const args = {
                 headers: {
                     'Authorization': 'Bearer ' + req.token,
