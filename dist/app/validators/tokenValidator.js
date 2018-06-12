@@ -12,6 +12,8 @@ const Client = require('node-rest-client').Client;
 class TokenValidator {
     constructor() {
         this.checkToken = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            console.log('======');
+            console.log(req.token);
             if (req.token !== undefined) {
                 const client = new Client();
                 let datapost = { name_api: 'post_users/login' };
@@ -32,6 +34,8 @@ class TokenValidator {
                     }
                 };
                 const reqapi = client.post('http://13.250.129.169:3002/oauth/authorise/check', args, function (data, response) {
+                    console.log(data);
+                    console.log('++++');
                     if (response.statusCode >= 200 && response.statusCode < 300) {
                         req['token'] = data.result.infor;
                         next();
