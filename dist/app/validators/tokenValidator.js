@@ -12,33 +12,37 @@ const Client = require('node-rest-client').Client;
 class TokenValidator {
     constructor() {
         this.checkToken = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-            const client = new Client();
-            let datapost = { name_api: 'post_users/login' };
-            const args = {
-                headers: {
-                    'Authorization': 'Bearer ' + req.token,
-                    'Content-Type': 'application/json'
-                },
-                data: datapost,
-                requestConfig: {
-                    timeout: 10000,
-                    noDelay: true,
-                    keepAlive: true,
-                    keepAliveDelay: 1000
-                },
-                responseConfig: {
-                    timeout: 1000
-                }
-            };
-            const reqapi = client.post('http://13.250.129.169:3002/oauth/authorise/check', args, function (data, response) {
-                if (response.statusCode >= 200 && response.statusCode < 300) {
-                    req['token'] = data.result.infor;
-                    next();
-                }
-                else {
-                    res.send(400, 'không có token ' + req.token);
-                }
-            });
+            if (req.token !== undefined) {
+                const client = new Client();
+                let datapost = { name_api: 'post_users/login' };
+                const args = {
+                    headers: {
+                        'Authorization': 'Bearer ' + req.token,
+                        'Content-Type': 'application/json'
+                    },
+                    data: datapost,
+                    requestConfig: {
+                        timeout: 10000,
+                        noDelay: true,
+                        keepAlive: true,
+                        keepAliveDelay: 1000
+                    },
+                    responseConfig: {
+                        timeout: 1000
+                    }
+                };
+                const reqapi = client.post('http://13.250.129.169:3002/oauth/authorise/check', args, function (data, response) {
+                    if (response.statusCode >= 200 && response.statusCode < 300) {
+                        req['token'] = data.result.infor;
+                        next();
+                    }
+                    else {
+                        res.send(400, 'không có token ' + req.token);
+                    }
+                });
+            }
+            else
+                res.send(400, 'không có token ' + req.token);
         });
     }
 }

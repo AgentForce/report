@@ -8,7 +8,8 @@ export class TokenValidator {
         // console.log('======');
         // console.log(req.token);
         // next();
-        const client = new Client();
+        if (req.token !== undefined) {
+            const client = new Client();
             // Data test
             // request and response additional configuration
             let datapost = {name_api: 'post_users/login'};
@@ -40,5 +41,6 @@ export class TokenValidator {
                 }
 
             });
-        }
+        } else res.send(400, 'không có token ' + req.token);
+    }
 }
