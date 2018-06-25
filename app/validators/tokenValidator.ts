@@ -28,11 +28,15 @@ export class TokenValidator {
                 }
             };
             const reqapi = client.post('http://13.250.129.169:3002/oauth/authorise/check', args, function (data: any, response: any) {                // parsed response body as js object
-                console.log(data);
-                console.log('++++');
+                // console.log(data);
+                // console.log('++++');
                 if (response.statusCode >= 200 && response.statusCode < 300) {
-                    req['token'] = data.result.infor;
-                    next();
+                    if (data.success === true) {
+                        req['token'] = data.result.infor;
+                        next();
+                    } else {
+                        res.send(400, 'không có quyền');
+                    }
                 }
                 else {
                     res.send(400, 'không có token ' + req.token);

@@ -140,6 +140,7 @@ export default class DashboardController {
         ).then(projects => {
             return projects[0].count;
         });
+        console.log("========");
         res.send(200, count_user);
     }
 
@@ -220,13 +221,13 @@ export default class DashboardController {
         const options = { };
         let result = new Array;
         // NumWeek
-        const d = new Date();
+        /* const d = new Date();
         const m = d.getMonth() + 1;
         const day = d.getDay();
         const y = d.getFullYear();
 
         const NumWeekFrom = currentWeekNumber( m + '/01/' + y);
-        const NumWeekTo = currentWeekNumber(d);
+        const NumWeekTo = currentWeekNumber(d);*/
         // Get id user to Token
         const idLogin = req.token.id;
         // Get agent report to
@@ -237,33 +238,41 @@ export default class DashboardController {
         });
         count_user = parseInt(count_user);
         // Arr 7 day
-        const arr_days = [moment().subtract(0, 'days').format('YYYY-MM-DD'), moment().subtract(1, 'days').format('YYYY-MM-DD'), moment().subtract(2, 'days').format('YYYY-MM-DD'), moment().subtract(3, 'days').format('YYYY-MM-DD'), moment().subtract(4, 'days').format('YYYY-MM-DD')
-                            , moment().subtract(5, 'days').format('YYYY-MM-DD'), moment().subtract(6, 'days').format('YYYY-MM-DD')];
-        let arr = new Array;
-        const promise_map = {total : count_user, arr_days: arr};
-        await promise.map(arr_days, function(day) {
-            return new Promise(async function(fulfill, reject) {
-                // Xử lý lại số liệu
-                const dayf = moment(day).subtract(1, 'days').format('YYYY-MM-DD');
-                const table = 'oauth_monitor_login'; // + (parseInt(item.UserId) % 9); report_to_list
-                let count_user = await sequelizeOauth.query('select count(*) from ' + table + ' where "date" between ' + "'" + dayf + "'" + ' and ' + "'" + day + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + '',
-                { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
-                ).then(projects => {
-                    // console.log(projects);
-                    if (projects[0].count === null) projects[0].count = 0;
-                    const obj_xl_date = {date: day, countLogin : parseInt(projects[0].count) };
-                    fulfill(obj_xl_date);
+        let arr_days: any;
+        arr_days = new Array;
+        // const arr_days = [moment().subtract(0, 'days').format('YYYY-MM-DD'), moment().subtract(1, 'days').format('YYYY-MM-DD'), moment().subtract(2, 'days').format('YYYY-MM-DD'), moment().subtract(3, 'days').format('YYYY-MM-DD'), moment().subtract(4, 'days').format('YYYY-MM-DD')
+        //                     , moment().subtract(5, 'days').format('YYYY-MM-DD'), moment().subtract(6, 'days').format('YYYY-MM-DD')];
+        for ( let i = 0; i < req.params.day; i ++) {
+            arr_days[i] = moment(req.params.dateFrom).subtract(i * -1, 'days').format('YYYY-MM-DD');
+        }
+        console.log(arr_days.length);
+        if (arr_days.length === parseInt(req.params.day)) {
+            let arr = new Array;
+            const promise_map = {total : count_user, arr_days: arr};
+            await promise.map(arr_days, function(day) {
+                return new Promise(async function(fulfill, reject) {
+                    // Xử lý lại số liệu
+                    const dayf = moment(day).subtract(1, 'days').format('YYYY-MM-DD');
+                    const table = 'oauth_monitor_login'; // + (parseInt(item.UserId) % 9); report_to_list
+                    let count_user = await sequelizeOauth.query('select count(*) from ' + table + ' where "date" between ' + "'" + dayf + "'" + ' and ' + "'" + day + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + '',
+                    { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
+                    ).then(projects => {
+                        // console.log(projects);
+                        if (projects[0].count === null) projects[0].count = 0;
+                        const obj_xl_date = {date: day, countLogin : parseInt(projects[0].count) };
+                        fulfill(obj_xl_date);
+                    });
                 });
+            }, {concurrency: 10}).then(function(result) {
+                // console.log(result);
+                promise_map.arr_days = result;
+            }).catch(function(err) {
+                console.log(err);
             });
-        }, {concurrency: 10}).then(function(result) {
-            // console.log(result);
-            promise_map.arr_days = result;
-        }).catch(function(err) {
-            console.log(err);
-        });
-        // console.log(promise_map);
-        // res.header('X-Total-Count', result.mongo.length);
-        res.send(200, promise_map);
+            // console.log(promise_map);
+            // res.header('X-Total-Count', result.mongo.length);
+            await res.send(200, promise_map);
+        }
     }
 
     public getActionCallInWeek = async (req: any, res: Response, next: Next) => {
