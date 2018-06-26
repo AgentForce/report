@@ -214,6 +214,48 @@ export default class DashboardController {
         });
         res.send(200, count_user);
     }
+    public getTransaction = async (req: any, res: Response, next: Next) => {
+        let obj: any;
+        let idLogin = req.token.id;
+        // Get agent report to
+        await promise.map([2, 3, 4, 6], function(ProcessStep) {
+            return new Promise(async function(fulfill, reject) {
+                let where_add = '';
+                let obj = {step: ProcessStep, min: 0, max: 0, avg: 0};
+                if (ProcessStep === 6) {
+                    where_add = ' and "StatusProcessStep" = 5 ';
+                    obj = {step: 5, min: 0, max: 0, avg: 0};
+                }
+
+                obj.min = await sequelize.query('SELECT min("TimePrevious") as value FROM "manulife_leads_transactions" where "ProcessStep" = ' + ProcessStep + where_add + ' and "ChangeType" = 1 and "ReportToList"' + ' ~\'*.' + idLogin + '.*\'' + ' and "NumWeek" =' + req.params.numweek,
+                { replacements: { }, type: sequelize.QueryTypes.SELECT }
+                ).then(projects => {
+                    if (projects[0].value === null) return 0;
+                    else return projects[0].value;
+                });
+                obj.max = await sequelize.query('SELECT max("TimePrevious") as value FROM "manulife_leads_transactions" where "ProcessStep" = ' + ProcessStep + where_add + '  and "ChangeType" = 1 and "ReportToList"' + ' ~\'*.' + idLogin + '.*\'' + ' and "NumWeek" =' + req.params.numweek,
+                { replacements: { }, type: sequelize.QueryTypes.SELECT }
+                ).then(projects => {
+                    if (projects[0].value === null) return 0;
+                    else return projects[0].value;
+                });
+                obj.avg = await sequelize.query('SELECT avg("TimePrevious") as value FROM "manulife_leads_transactions" where "ProcessStep"  = ' + ProcessStep + where_add + '  and "ChangeType" = 1 and "ReportToList"' + ' ~\'*.' + idLogin + '.*\'' + ' and "NumWeek" =' + req.params.numweek,
+                { replacements: { }, type: sequelize.QueryTypes.SELECT }
+                ).then(projects => {
+                    if (projects[0].value === null) return 0;
+                    else return projects[0].value;
+                });
+                fulfill(obj);
+            });
+        }, {concurrency: 10}).then(function(result) {
+            obj = result;
+        }).catch(function(err) {
+            console.log(err);
+        });
+
+        // count_user = parseInt(count_user);m01667041037
+        await res.send(200, obj);
+    }
 
     public getActionInWeek = async (req: any, res: Response, next: Next) => {
         // http://mongoosejs.com/docs/api.html#model_Model.find
@@ -273,6 +315,25 @@ export default class DashboardController {
             // res.header('X-Total-Count', result.mongo.length);
             await res.send(200, promise_map);
         }
+    }
+
+
+    public getActionList = async (req: any, res: Response, next: Next) => {
+        const projection = {};
+        const options = { };
+        let result = new Array;
+        // Get id user to Token
+        let idLogin = req.token.id;
+        idLogin = 56;
+        // Get agent report to
+        // Arr 7 day
+        const table = 'oauth_monitor_login'; // + (parseInt(item.UserId) % 9); report_to_list
+        const count_user = await sequelizeOauth.query('select user_id, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.from + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id order by count desc',
+        { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
+        ).then(projects => {
+            return projects;
+        });
+        await res.send(200, count_user);
     }
 
     public getActionCallInWeek = async (req: any, res: Response, next: Next) => {

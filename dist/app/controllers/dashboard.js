@@ -163,6 +163,46 @@ class DashboardController {
             });
             res.send(200, count_user);
         });
+        this.getTransaction = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            let obj;
+            let idLogin = req.token.id;
+            yield promise.map([2, 3, 4, 6], function (ProcessStep) {
+                return new Promise(function (fulfill, reject) {
+                    return __awaiter(this, void 0, void 0, function* () {
+                        let where_add = '';
+                        let obj = { step: ProcessStep, min: 0, max: 0, avg: 0 };
+                        if (ProcessStep === 6) {
+                            where_add = ' and "StatusProcessStep" = 5 ';
+                            obj = { step: 5, min: 0, max: 0, avg: 0 };
+                        }
+                        obj.min = yield db_1.sequelize.query('SELECT min("TimePrevious") as value FROM "manulife_leads_transactions" where "ProcessStep" = ' + ProcessStep + where_add + ' and "ChangeType" = 1 and "ReportToList"' + ' ~\'*.' + idLogin + '.*\'' + ' and "NumWeek" =' + req.params.numweek, { replacements: {}, type: db_1.sequelize.QueryTypes.SELECT }).then(projects => {
+                            if (projects[0].value === null)
+                                return 0;
+                            else
+                                return projects[0].value;
+                        });
+                        obj.max = yield db_1.sequelize.query('SELECT max("TimePrevious") as value FROM "manulife_leads_transactions" where "ProcessStep" = ' + ProcessStep + where_add + '  and "ChangeType" = 1 and "ReportToList"' + ' ~\'*.' + idLogin + '.*\'' + ' and "NumWeek" =' + req.params.numweek, { replacements: {}, type: db_1.sequelize.QueryTypes.SELECT }).then(projects => {
+                            if (projects[0].value === null)
+                                return 0;
+                            else
+                                return projects[0].value;
+                        });
+                        obj.avg = yield db_1.sequelize.query('SELECT avg("TimePrevious") as value FROM "manulife_leads_transactions" where "ProcessStep"  = ' + ProcessStep + where_add + '  and "ChangeType" = 1 and "ReportToList"' + ' ~\'*.' + idLogin + '.*\'' + ' and "NumWeek" =' + req.params.numweek, { replacements: {}, type: db_1.sequelize.QueryTypes.SELECT }).then(projects => {
+                            if (projects[0].value === null)
+                                return 0;
+                            else
+                                return projects[0].value;
+                        });
+                        fulfill(obj);
+                    });
+                });
+            }, { concurrency: 10 }).then(function (result) {
+                obj = result;
+            }).catch(function (err) {
+                console.log(err);
+            });
+            yield res.send(200, obj);
+        });
         this.getActionInWeek = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const projection = {};
             const options = {};
@@ -201,6 +241,18 @@ class DashboardController {
                 });
                 yield res.send(200, promise_map);
             }
+        });
+        this.getActionList = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            const projection = {};
+            const options = {};
+            let result = new Array;
+            let idLogin = req.token.id;
+            idLogin = 56;
+            const table = 'oauth_monitor_login';
+            const count_user = yield db_2.sequelizeOauth.query('select user_id, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.from + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id order by count desc', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                return projects;
+            });
+            yield res.send(200, count_user);
         });
         this.getActionCallInWeek = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const projection = {};

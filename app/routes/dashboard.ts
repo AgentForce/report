@@ -14,12 +14,10 @@ export function routes(server: Server) {
     server.get({ path: `${path}/getAgencyInWeek`, version: version }, tokenValidator.checkToken, dashboardCtrl.getAgencyInWeek);
     server.get({ path: `${path}/getUserOnboard`, version: version }, tokenValidator.checkToken, dashboardCtrl.getUserOnboard);
     server.get({ path: `${path}/getAction/:dateFrom/:day`, version: version }, tokenValidator.checkToken, dashboardCtrl.getActionInWeek);
+    server.get({ path: `${path}/getActionList/:from/:to`, version: version }, tokenValidator.checkToken, dashboardCtrl.getActionList);
     server.get({ path: `${path}/getActionCall/:numweekFrom/:numweekTo`, version: version }, tokenValidator.checkToken, dashboardCtrl.getActionCallInWeek);
     server.get({ path: `${path}/getSales/:numweekFrom/:numweekTo`, version: version }, tokenValidator.checkToken, dashboardCtrl.getSalesInWeek);
     server.get({ path: `${path}/getRecruitment/:numweekFrom/:numweekTo`, version: version }, tokenValidator.checkToken, dashboardCtrl.getRecruitmentInWeek);
     server.get({ path: `${path}/getProduct/:numweekFrom/:numweekTo`, version: version }, tokenValidator.checkToken, dashboardCtrl.getProduct);
-
-    // server.post({ path: path, version: version }, widgetCtrl.createDocument);
-    // server.put({ path: path, version: version }, widgetCtrl.updateDocument);
-    // server.del({ path: `${path}/:product_id`, version: version }, widgetCtrl.deleteDocument);
+    server.get({ path: `${path}/transaction/:numweek`, version: version }, tokenValidator.checkToken, dashboardCtrl.getTransaction);
 }
