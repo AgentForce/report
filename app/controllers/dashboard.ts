@@ -328,7 +328,7 @@ export default class DashboardController {
         // Get agent report to
         // Arr 7 day
         const table = 'oauth_monitor_login'; // + (parseInt(item.UserId) % 9); report_to_list
-        const count_user = await sequelizeOauth.query('select user_id, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.from + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id order by count desc',
+        const count_user = await sequelizeOauth.query('select user_id, fullname, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.to + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id, fullname order by count asc',
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
         ).then(projects => {
             return projects;

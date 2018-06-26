@@ -249,7 +249,7 @@ class DashboardController {
             let idLogin = req.token.id;
             idLogin = 56;
             const table = 'oauth_monitor_login';
-            const count_user = yield db_2.sequelizeOauth.query('select user_id, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.from + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id order by count desc', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+            const count_user = yield db_2.sequelizeOauth.query('select user_id, fullname, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.to + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id, fullname order by count asc', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                 return projects;
             });
             yield res.send(200, count_user);
