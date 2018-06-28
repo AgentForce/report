@@ -46,9 +46,6 @@ export default class DashboardController {
     }
 
     public getTenAgency = async (req: any, res: Response, next: Next) => {
-        // console.log('====');
-        // console.log(req.token);
-        // console.log(req.token.id);
         // http://mongoosejs.com/docs/api.html#model_Model.find
         const projection = {};
         const options = { };
@@ -71,15 +68,12 @@ export default class DashboardController {
         await promise.map(result, function(item) {
             return new Promise(async function(fulfill, reject) {
                 // Select DB oauth
-                // console.log(item);
                 const table = 'oauth_monitor_login'; // + (parseInt(item.UserId) % 9); report_to_list
                 let count_user = await sequelizeOauth.query('select sum("count") from ' + table + ' where "date" between ' + "'" + req.params.dateFrom + "'" + ' and ' + "'" + req.params.dateTo + "'" + ' and "report_to_list"' + ' ~\'*.' + item.UserId + '.*\'' + '',
                 { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
                 ).then(projects => {
-                    console.log(projects);
                     if (projects[0].sum === null) projects[0].sum = 0;
                     item.countLogin = parseInt(projects[0].sum);
-                    console.log(item);
                     fulfill(item);
                 });
                 // const arr_AgentReportTo = User.findAll({ where: {report_to: idLogin + ''}, offset: 1, limit: 5 });
@@ -87,7 +81,6 @@ export default class DashboardController {
                 // fulfill(item);
             });
           }, {concurrency: 10}).then(function(result) {
-              // console.log(result);
           }).catch(function(err) {
               // console.log(err);
           });
@@ -111,28 +104,35 @@ export default class DashboardController {
         // Get id user to Token
         const idLogin = req.token.id;
         // Get agent report to
-        let count_user = await sequelize.query('select "CurrentCallSale","SubCurrentCallSale","CurrentMetting","TargetMetting","SubCurrentMetting", "SubTargetMetting", "CurrentPresentation","SubCurrentPresentation", "TargetPresentation","SubTargetPresentation","CurrentContract","SubCurrentContract", "TargetContractSale" as targetcontract,"SubTargetContractSale" as subtargetcontract from manulife_campaigns where "UserId" = ' + idLogin + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
+        let count_user = new Object;
+        let countuser = await sequelize.query('select sum("CurrentCallSale") as CurrentCallSale, sum("SubCurrentCallSale") as SubCurrentCallSale,sum("CurrentMetting") as CurrentMetting,sum("TargetMetting") as TargetMetting,sum("SubCurrentMetting") as SubCurrentMetting, sum("TargetCallSale") as TargetCallSale,sum("SubTargetCallSale") as SubTargetCallSale, sum("SubTargetMetting") as SubTargetMetting, sum("CurrentPresentation") as CurrentPresentation, sum("SubCurrentPresentation") as SubCurrentPresentation, sum("TargetPresentation") as TargetPresentation, sum("SubTargetPresentation") as SubTargetPresentation, sum("CurrentContract") as CurrentContract, sum("SubCurrentContract") as SubCurrentContract, sum("TargetContractSale") as targetcontract,sum("SubTargetContractSale") as subtargetcontract from manulife_campaigns where "UserId" = ' + idLogin + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
         ).then(projects => {
             return projects;
         });
-        if (count_user.length === 0 ) {
+        if (countuser.length === 0 ) {
             count_user = await sequelize.query('select sum("CurrentCallSale") as CurrentCallSale, sum("TargetCallSale") as TargetCallSale, sum("CurrentMetting") as CurrentMetting, sum("TargetMetting") as TargetMetting, sum("CurrentPresentation") as CurrentPresentation, sum("TargetPresentation") as TargetPresentation, sum("CurrentContract") as CurrentContract, sum("TargetContractSale") as TargetContract  from manulife_campaigns where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
             { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
             ).then(projects => {
+                if (projects[0].currentcallsale === null) projects[0].currentcallsale = 0;
+                if (projects[0].targetcallsale === null) projects[0].targetcallsale = 0;
+                if (projects[0].currentmetting === null) projects[0].currentmetting = 0;
+                if (projects[0].targetmetting === null) projects[0].targetmetting = 0;
+                if (projects[0].currentcontract === null) projects[0].currentcontract = 0;
+                if (projects[0].currentpresentation === null) projects[0].currentpresentation = 0;
+                if (projects[0].targetpresentation === null) projects[0].targetpresentation = 0;
+                if (projects[0].targetcontract === null) projects[0].targetcontract = 0;
                 return projects[0];
             });
         } else {
-            count_user = count_user[0];
-            count_user.currentcallsale = count_user.currentcallsale + count_user.subcurrentcallsale;
-            count_user.targetcallsale = count_user.targetcallsale + count_user.subtargetcallsale;
-            count_user.currentmetting = count_user.currentmetting + count_user.subcurrentmetting;
-            count_user.targetmetting = count_user.targetmetting + count_user.subtargetmetting;
-            count_user.currentpresentation = count_user.currentpresentation + count_user.subcurrentpresentation;
-            count_user.targetpresentation = count_user.targetpresentation + count_user.subtargetpresentation;
-
-            count_user.currentcontract = count_user.currentcontract + count_user.subcurrentcontract;
-            count_user.targetcontract = count_user.targetcontract + count_user.subtargetcontract;
+            count_user.currentcallsale = parseInt(countuser[0].currentcallsale) + parseInt(countuser[0].subcurrentcallsale);
+            count_user.targetcallsale = parseInt(countuser[0].targetcallsale) + parseInt(countuser[0].subtargetcallsale);
+            count_user.currentmetting = parseInt(countuser[0].currentmetting) + parseInt(countuser[0].subcurrentmetting);
+            count_user.targetmetting = parseInt(countuser[0].targetmetting) + parseInt(countuser[0].subtargetmetting);            count_user.currentpresentation = parseInt(countuser[0].currentcallsale) + parseInt(countuser[0].subcurrentcallsale);
+            count_user.targetpresentation = parseInt(countuser[0].targetpresentation) + parseInt(countuser[0].subtargetpresentation);
+            count_user.currentcontract = parseInt(countuser[0].currentcontract) + parseInt(countuser[0].subcurrentcontract);
+            count_user.targetcontract = parseInt(countuser[0].currentcallsale) + parseInt(countuser[0].subtargetcontract);
+            count_user.currentpresentation = parseInt(countuser[0].currentpresentation) + parseInt(countuser[0].subcurrentpresentation);
 
         }
         count_user.msdc = await sequelize.query('select  count(*) from manulife_leads where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
@@ -140,7 +140,6 @@ export default class DashboardController {
         ).then(projects => {
             return projects[0].count;
         });
-        console.log("========");
         res.send(200, count_user);
     }
 
@@ -287,7 +286,6 @@ export default class DashboardController {
         for ( let i = 0; i < req.params.day; i ++) {
             arr_days[i] = moment(req.params.dateFrom).subtract(i * -1, 'days').format('YYYY-MM-DD');
         }
-        console.log(arr_days.length);
         if (arr_days.length === parseInt(req.params.day)) {
             let arr = new Array;
             const promise_map = {total : count_user, arr_days: arr};
@@ -299,19 +297,16 @@ export default class DashboardController {
                     let count_user = await sequelizeOauth.query('select count(*) from ' + table + ' where "date" between ' + "'" + dayf + "'" + ' and ' + "'" + day + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + '',
                     { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
                     ).then(projects => {
-                        // console.log(projects);
                         if (projects[0].count === null) projects[0].count = 0;
                         const obj_xl_date = {date: day, countLogin : parseInt(projects[0].count) };
                         fulfill(obj_xl_date);
                     });
                 });
             }, {concurrency: 10}).then(function(result) {
-                // console.log(result);
                 promise_map.arr_days = result;
             }).catch(function(err) {
                 console.log(err);
             });
-            // console.log(promise_map);
             // res.header('X-Total-Count', result.mongo.length);
             await res.send(200, promise_map);
         }
@@ -394,12 +389,10 @@ export default class DashboardController {
                 fulfill(obj);
             });
           }, {concurrency: 10}).then(function(result) {
-              // console.log(result);
               promise_map = result;
           }).catch(function(err) {
               console.log(err);
           });
-        console.log(promise_map);
         // res.header('X-Total-Count', result.mongo.length);
         res.send(200, promise_map);
     }
@@ -438,14 +431,12 @@ export default class DashboardController {
                         let count_user = await sequelizeOauth.query('select sum("count") from ' + table + ' where "date" between ' + "'" + dayf + "'" + ' and ' + "'" + day + "'" + ' and "report_to_list"' + ' ~\'*.' + obj_agent.id + '.*\'' + '',
                         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
                         ).then(projects => {
-                            console.log(projects);
                             if (projects[0].sum === null) projects[0].sum = 0;
                             const obj_xl_date = {date: day, countLogin : parseInt(projects[0].sum) };
                             fulfill(obj_xl_date);
                         });
                     });
                 }, {concurrency: 10}).then(function(result) {
-                    console.log(result);
                     obj.arr_days = result;
                 }).catch(function(err) {
                     console.log(err);
@@ -453,12 +444,10 @@ export default class DashboardController {
                 fulfill(obj);
             });
           }, {concurrency: 10}).then(function(result) {
-              // console.log(result);
               promise_map = result;
           }).catch(function(err) {
               console.log(err);
           });
-        // console.log(promise_map);
         // res.header('X-Total-Count', result.mongo.length);
         res.send(200, promise_map);
     }
@@ -483,10 +472,8 @@ export default class DashboardController {
                 const active = await sequelizeOauth.query('select count(*) from oauth_users where "report_to_list"' + ' ~\'*.' + item.id + '.*\'' + ' and "status" = 1',
                 { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
                 ).then(projects => {
-                    // console.log(projects);
                     return projects[0].count;
                 });
-                // console.log(inactive);
                 obj.inactive = parseInt(inactive);
                 obj.active = parseInt(active);
                 fulfill(obj);

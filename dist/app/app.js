@@ -19,7 +19,7 @@ const cors = corsMiddleware({
     origins: ['*'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowHeaders: ['*'],
-    exposeHeaders: ['API-Token-Expiry']
+    exposeHeaders: ['API-Token-Expiry', 'Content-type, Authorization']
 });
 exports.server.pre(cors.preflight);
 exports.server.use(cors.actual);

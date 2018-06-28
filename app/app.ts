@@ -23,7 +23,7 @@ const cors = corsMiddleware({
     origins: ['*'], // change before releasing
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowHeaders: ['*'],
-    exposeHeaders: ['API-Token-Expiry']
+    exposeHeaders: ['API-Token-Expiry', 'Content-type, Authorization']
 });
 server.pre(cors.preflight);
 server.use(cors.actual);
