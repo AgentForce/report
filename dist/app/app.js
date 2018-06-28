@@ -17,9 +17,9 @@ exports.server = restify.createServer({
 const cors = corsMiddleware({
     preflightMaxAge: 50,
     origins: ['*'],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowHeaders: ['*'],
-    exposeHeaders: ['API-Token-Expiry', 'Content-type, Authorization']
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE, OPTION',
+    allowHeaders: ['Content-type, Authorization'],
+    exposeHeaders: ['API-Token-Expiry']
 });
 exports.server.pre(cors.preflight);
 exports.server.use(cors.actual);

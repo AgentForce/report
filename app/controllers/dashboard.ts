@@ -204,7 +204,6 @@ export default class DashboardController {
                 return projects[0];
             });
         } else {
-            console.log('hihihi' + (parseInt(countuser[0].currentsurvey) + parseInt(countuser[0].subcurrentsurvey)))
             count_user.currentsurvey = parseInt(countuser[0].currentsurvey) + parseInt(countuser[0].subcurrentsurvey);
             count_user.targetsurvey = parseInt(countuser[0].targetsurvey) + parseInt(countuser[0].subtargetsurvey);
             count_user.currentcop = parseInt(countuser[0].currentcop) + parseInt(countuser[0].subcurrentcop);

@@ -18,13 +18,21 @@ export let server = restify.createServer({
     version: envSettings.app.version
 });
 
-const cors = corsMiddleware({
+/*const cors = corsMiddleware({
     preflightMaxAge: 50, // optional
     origins: ['*'], // change before releasing
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowHeaders: ['*'],
     exposeHeaders: ['API-Token-Expiry', 'Content-type, Authorization']
-});
+});*/
+const cors = corsMiddleware({
+    preflightMaxAge: 50, // optional
+    origins: ['*'], // change before releasing
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE, OPTION',
+    allowHeaders: ['Content-type, Authorization'],
+    exposeHeaders: ['API-Token-Expiry']
+  });
+
 server.pre(cors.preflight);
 server.use(cors.actual);
 server.pre(restify.pre.sanitizePath());
