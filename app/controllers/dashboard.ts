@@ -183,35 +183,52 @@ export default class DashboardController {
         // Get id user to Token
         const idLogin = req.token.id;
         // Get agent report to
-        let count_user = await sequelize.query('select "CurrentSurvey","SubCurrentSurvey","TargetSurvey","SubTargetSurvey","CurrentCop","SubCurrentCop", "TargetCop", "SubTargetCop", "CurrentMit", "SubCurrentMit", "TargetMit", "SubTargetMit", "CurrentAgentCode", "SubCurrentAgentCode", "TargetAgentCode", "SubTargetAgentCode" from manulife_campaigns where "UserId" = ' + idLogin + ' and  "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
+        let count_user = new Object;
+        let countuser = await sequelize.query('select "CurrentSurvey","SubCurrentSurvey","TargetSurvey","SubTargetSurvey","CurrentCop","SubCurrentCop", "TargetCop", "SubTargetCop", "CurrentMit", "SubCurrentMit", "TargetMit", "SubTargetMit", "CurrentAgentCode", "SubCurrentAgentCode", "TargetAgentCode", "SubTargetAgentCode" from manulife_campaigns where "UserId" = ' + idLogin + ' and  "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
         ).then(projects => {
             return projects;
         });
-        if (count_user.length === 0 ) {
+        if (countuser.length === 0 ) {
             count_user = await sequelize.query('select sum("CurrentSurvey") as CurrentSurvey, sum("TargetSurvey") as TargetSurvey, sum("CurrentCop") as CurrentCop, sum("TargetCop") as TargetCop, sum("CurrentMit") as CurrentMit, sum("TargetMit") as TargetMit, sum("CurrentAgentCode") as CurrentAgentCode, sum("TargetAgentCode") as TargetAgentCode  from manulife_campaigns where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
             { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
             ).then(projects => {
+                if (projects[0].currentsurvey === null) projects[0].currentsurvey = 0;
+                if (projects[0].targetsurvey === null) projects[0].targetsurvey = 0;
+                if (projects[0].currentcop === null) projects[0].currentcop = 0;
+                if (projects[0].targetcop === null) projects[0].targetcop = 0;
+                if (projects[0].currentmit === null) projects[0].currentmit = 0;
+                if (projects[0].targetmit === null) projects[0].targetmit = 0;
+                if (projects[0].currentagentcode === null) projects[0].currentagentcode = 0;
+                if (projects[0].targetagentcode === null) projects[0].targetagentcode = 0;
                 return projects[0];
             });
         } else {
-            count_user = count_user[0];
-            count_user.currentsurvey = count_user.currentsurvey + count_user.subcurrentsurvey;
-            count_user.targetsurvey = count_user.targetsurvey + count_user.subtargetsurvey;
-            count_user.currentcop = count_user.currentcop + count_user.subcurrentcop;
-            count_user.targetcop = count_user.targetcop + count_user.subtargetcop;
-            count_user.currentmit = count_user.currentmit + count_user.currentmit;
-            count_user.targetmit = count_user.targetmit + count_user.subtargetmit;
-            count_user.currentagentcode = count_user.currentagentcode + count_user.subcurrentagentcode;
-            count_user.targetagentcode = count_user.targetagentcode + count_user.sutargetagentcode;
-
+            console.log('hihihi' + (parseInt(countuser[0].currentsurvey) + parseInt(countuser[0].subcurrentsurvey)))
+            count_user.currentsurvey = parseInt(countuser[0].currentsurvey) + parseInt(countuser[0].subcurrentsurvey);
+            count_user.targetsurvey = parseInt(countuser[0].targetsurvey) + parseInt(countuser[0].subtargetsurvey);
+            count_user.currentcop = parseInt(countuser[0].currentcop) + parseInt(countuser[0].subcurrentcop);
+            count_user.targetcop = parseInt(countuser[0].targetcop) + parseInt(countuser[0].subtargetcop);
+            count_user.currentmit = parseInt(countuser[0].currentmit) + parseInt(countuser[0].TargetMit);
+            count_user.targetmit = parseInt(countuser[0].targetmit) + parseInt(countuser[0].subtargetmit);
+            count_user.currentagentcode = parseInt(countuser[0].currentagentcode) + parseInt(countuser[0].subcurrentagentcode);
+            count_user.targetagentcode = parseInt(countuser[0].targetagentcode) + parseInt(countuser[0].sutargetagentcode);
+            console.log((count_user.currentsurvey * 1));
+            if (isNaN(count_user.currentsurvey)) count_user.currentsurvey = 0;
+            if (isNaN(count_user.targetsurvey)) count_user.targetsurvey = 0;
+            if (isNaN(count_user.currentcop)) count_user.currentcop = 0;
+            if (isNaN(count_user.targetcop)) count_user.targetcop = 0;
+            if (isNaN(count_user.currentmit)) count_user.currentmit = 0;
+            if (isNaN(count_user.targetmit)) count_user.targetmit = 0;
+            if (isNaN(count_user.currentagentcode)) count_user.currentagentcode = 0;
+            if (isNaN(count_user.targetagentcode)) count_user.targetagentcode = 0;
         }
         count_user.msdc = await sequelize.query('select  count(*) from manulife_leads where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
         ).then(projects => {
             return projects[0].count;
         });
-        res.send(200, count_user);
+        await res.send(200, count_user);
     }
     public getTransaction = async (req: any, res: Response, next: Next) => {
         let obj: any;
