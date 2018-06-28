@@ -121,7 +121,7 @@ class DashboardController {
                 count_user.targetcontract = parseInt(countuser[0].currentcallsale) + parseInt(countuser[0].subtargetcontract);
                 count_user.currentpresentation = parseInt(countuser[0].currentpresentation) + parseInt(countuser[0].subcurrentpresentation);
             }
-            count_user.msdc = yield db_1.sequelize.query('select  count(*) from manulife_leads where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+            count_user.countContract = yield db_1.sequelize.query('select  count(*) from manulife_contracts where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                 return projects[0].count;
             });
             res.send(200, count_user);
@@ -172,7 +172,7 @@ class DashboardController {
                 count_user.currentagentcode = count_user.currentagentcode + count_user.subcurrentagentcode;
                 count_user.targetagentcode = count_user.targetagentcode + count_user.sutargetagentcode;
             }
-            count_user.countContract = yield db_1.sequelize.query('select  count(*) from manulife_contracts where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+            count_user.msdc = yield db_1.sequelize.query('select  count(*) from manulife_leads where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                 return projects[0].count;
             });
             res.send(200, count_user);

@@ -135,7 +135,7 @@ export default class DashboardController {
             count_user.currentpresentation = parseInt(countuser[0].currentpresentation) + parseInt(countuser[0].subcurrentpresentation);
 
         }
-        count_user.msdc = await sequelize.query('select  count(*) from manulife_leads where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
+        count_user.countContract = await sequelize.query('select  count(*) from manulife_contracts where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
         ).then(projects => {
             return projects[0].count;
@@ -206,7 +206,7 @@ export default class DashboardController {
             count_user.targetagentcode = count_user.targetagentcode + count_user.sutargetagentcode;
 
         }
-        count_user.countContract = await sequelize.query('select  count(*) from manulife_contracts where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
+        count_user.msdc = await sequelize.query('select  count(*) from manulife_leads where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
         ).then(projects => {
             return projects[0].count;
