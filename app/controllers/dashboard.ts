@@ -194,13 +194,21 @@ export default class DashboardController {
             { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
             ).then(projects => {
                 if (projects[0].currentsurvey === null) projects[0].currentsurvey = 0;
+                else projects[0].currentsurvey = parseInt(projects[0].currentsurvey);
                 if (projects[0].targetsurvey === null) projects[0].targetsurvey = 0;
+                else projects[0].targetsurvey = parseInt(projects[0].targetsurvey);
                 if (projects[0].currentcop === null) projects[0].currentcop = 0;
+                else projects[0].currentcop = parseInt(projects[0].currentcop);
                 if (projects[0].targetcop === null) projects[0].targetcop = 0;
+                else projects[0].targetcop = parseInt(projects[0].targetcop);
                 if (projects[0].currentmit === null) projects[0].currentmit = 0;
+                else projects[0].currentmit = parseInt(projects[0].currentmit);
                 if (projects[0].targetmit === null) projects[0].targetmit = 0;
+                else projects[0].targetmit = parseInt(projects[0].targetmit);
                 if (projects[0].currentagentcode === null) projects[0].currentagentcode = 0;
+                else projects[0].currentagentcode = parseInt(projects[0].currentagentcode);
                 if (projects[0].targetagentcode === null) projects[0].targetagentcode = 0;
+                else projects[0].targetagentcode = parseInt(projects[0].targetagentcode);
                 return projects[0];
             });
         } else {
@@ -225,7 +233,7 @@ export default class DashboardController {
         count_user.msdc = await sequelize.query('select  count(*) from manulife_leads where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo,
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
         ).then(projects => {
-            return projects[0].count;
+            return parseInt(projects[0].count);
         });
         await res.send(200, count_user);
     }
@@ -338,8 +346,8 @@ export default class DashboardController {
         idLogin = 56;
         // Get agent report to
         // Arr 7 day
-        const table = 'oauth_monitor_login'; // + (parseInt(item.UserId) % 9); report_to_list
-        const count_user = await sequelizeOauth.query('select user_id, fullname, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.to + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id, fullname order by count asc',
+        const table = 'oauth_monitor_login'; // + (parseInt(item.UserId) % 9); report_to_list mã đại lý, sdt, người quản lý ngày login
+        const count_user = await sequelizeOauth.query('select user_id, username, date, fullname, report_to_username, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.to + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id, username, date, fullname, report_to_username order by count asc OFFSET ' + req.params.offset + ' LIMIT ' + req.params.limit,
         { replacements: { }, type: sequelizeOauth.QueryTypes.SELECT }
         ).then(projects => {
             return projects;

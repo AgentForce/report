@@ -161,20 +161,36 @@ class DashboardController {
                 count_user = yield db_1.sequelize.query('select sum("CurrentSurvey") as CurrentSurvey, sum("TargetSurvey") as TargetSurvey, sum("CurrentCop") as CurrentCop, sum("TargetCop") as TargetCop, sum("CurrentMit") as CurrentMit, sum("TargetMit") as TargetMit, sum("CurrentAgentCode") as CurrentAgentCode, sum("TargetAgentCode") as TargetAgentCode  from manulife_campaigns where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                     if (projects[0].currentsurvey === null)
                         projects[0].currentsurvey = 0;
+                    else
+                        projects[0].currentsurvey = parseInt(projects[0].currentsurvey);
                     if (projects[0].targetsurvey === null)
                         projects[0].targetsurvey = 0;
+                    else
+                        projects[0].targetsurvey = parseInt(projects[0].targetsurvey);
                     if (projects[0].currentcop === null)
                         projects[0].currentcop = 0;
+                    else
+                        projects[0].currentcop = parseInt(projects[0].currentcop);
                     if (projects[0].targetcop === null)
                         projects[0].targetcop = 0;
+                    else
+                        projects[0].targetcop = parseInt(projects[0].targetcop);
                     if (projects[0].currentmit === null)
                         projects[0].currentmit = 0;
+                    else
+                        projects[0].currentmit = parseInt(projects[0].currentmit);
                     if (projects[0].targetmit === null)
                         projects[0].targetmit = 0;
+                    else
+                        projects[0].targetmit = parseInt(projects[0].targetmit);
                     if (projects[0].currentagentcode === null)
                         projects[0].currentagentcode = 0;
+                    else
+                        projects[0].currentagentcode = parseInt(projects[0].currentagentcode);
                     if (projects[0].targetagentcode === null)
                         projects[0].targetagentcode = 0;
+                    else
+                        projects[0].targetagentcode = parseInt(projects[0].targetagentcode);
                     return projects[0];
                 });
             }
@@ -206,7 +222,7 @@ class DashboardController {
                     count_user.targetagentcode = 0;
             }
             count_user.msdc = yield db_1.sequelize.query('select  count(*) from manulife_leads where "ReportToList" ~ ' + '\'*.' + idLogin + '.*\'' + ' and "NumWeek" between ' + req.params.numweekFrom + ' and ' + req.params.numweekTo, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
-                return projects[0].count;
+                return parseInt(projects[0].count);
             });
             yield res.send(200, count_user);
         });
@@ -295,7 +311,7 @@ class DashboardController {
             let idLogin = req.token.id;
             idLogin = 56;
             const table = 'oauth_monitor_login';
-            const count_user = yield db_2.sequelizeOauth.query('select user_id, fullname, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.to + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id, fullname order by count asc', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+            const count_user = yield db_2.sequelizeOauth.query('select user_id, username, date, fullname, report_to_username, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.to + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id, username, date, fullname, report_to_username order by count asc OFFSET ' + req.params.offset + ' LIMIT ' + req.params.limit, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
                 return projects;
             });
             yield res.send(200, count_user);
