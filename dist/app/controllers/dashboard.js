@@ -13,6 +13,7 @@ const log_calls_1 = require("../models/log_calls");
 const User_1 = require("../pgoauth/User");
 const db_1 = require("../pgmnl/db");
 const db_2 = require("../pgoauth/db");
+const _ = require('lodash');
 const promise = require("bluebird");
 const currentWeekNumber = require('current-week-number');
 const moment = require('moment');
@@ -309,12 +310,31 @@ class DashboardController {
             const options = {};
             let result = new Array;
             let idLogin = req.token.id;
-            idLogin = 56;
             const table = 'oauth_monitor_login';
-            const count_user = yield db_2.sequelizeOauth.query('select user_id, username, date, fullname, report_to_username, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.to + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id, username, date, fullname, report_to_username order by count asc OFFSET ' + req.params.offset + ' LIMIT ' + req.params.limit, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
-                return projects;
-            });
-            yield res.send(200, count_user);
+            if (req.params.type === '1') {
+                const count_user = yield db_2.sequelizeOauth.query('select user_id, username, date, fullname, report_to_username, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.to + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id, username, date, fullname, report_to_username order by count asc OFFSET ' + req.params.offset + ' LIMIT ' + req.params.limit, { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                    return projects;
+                });
+                const total = yield db_2.sequelizeOauth.query('select user_id, username, date, fullname, report_to_username, count(user_id) as count from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.to + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id, username, date, fullname, report_to_username ', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                    return projects.length;
+                });
+                yield res.send(200, { array: count_user, total: total });
+            }
+            else {
+                const users_login = yield db_2.sequelizeOauth.query('select user_id, username, report_to_username from ' + table + ' where "date" between ' + "'" + req.params.from + "'" + ' and ' + "'" + req.params.to + "'" + ' and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'' + ' group by user_id, username, report_to_username ', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                    return projects;
+                });
+                const users = yield db_2.sequelizeOauth.query('select id as user_id, username,  "fullName", report_to_username from oauth_users where status = 1 and "report_to_list"' + ' ~\'*.' + idLogin + '.*\'', { replacements: {}, type: db_2.sequelizeOauth.QueryTypes.SELECT }).then(projects => {
+                    return projects;
+                });
+                const arr = _.differenceBy(users, users_login, 'user_id');
+                const slipt_arr = _.chunk(arr, parseInt(req.params.limit));
+                let el = 0;
+                if (parseInt(req.params.offset) % parseInt(req.params.limit) > 0) {
+                    el++;
+                }
+                yield res.send(200, { array: slipt_arr[el], total: arr.length });
+            }
         });
         this.getActionCallInWeek = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
             const projection = {};
